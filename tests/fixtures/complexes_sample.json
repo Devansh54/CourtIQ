@@ -1,0 +1,123 @@
+{
+  "generated_at": "2024-11-04T12:00:00Z",
+  "complexes": [
+    {
+      "id": "sr:complex:1",
+      "name": "Melbourne Park",
+      "venues": [
+        {
+          "id": "sr:venue:11",
+          "name": "Rod Laver Arena",
+          "city_name": "Melbourne",
+          "country_name": "Australia",
+          "country_code": "AUS",
+          "timezone": "Australia/Melbourne"
+        },
+        {
+          "id": "sr:venue:12",
+          "name": "Margaret Court Arena",
+          "city_name": "Melbourne",
+          "country_name": "Australia",
+          "country_code": "AUS",
+          "timezone": "Australia/Melbourne"
+        },
+        {
+          "id": "sr:venue:13",
+          "name": "John Cain Arena",
+          "city_name": "Melbourne",
+          "country_name": "Australia",
+          "country_code": "AUS",
+          "timezone": "Australia/Melbourne"
+        }
+      ]
+    },
+    {
+      "id": "sr:complex:2",
+      "name": "Roland Garros",
+      "venues": [
+        {
+          "id": "sr:venue:21",
+          "name": "Court Philippe-Chatrier",
+          "city_name": "Paris",
+          "country_name": "France",
+          "country_code": "FRA",
+          "timezone": "Europe/Paris"
+        },
+        {
+          "id": "sr:venue:22",
+          "name": "Court Suzanne-Lenglen",
+          "city_name": "Paris",
+          "country_name": "France",
+          "country_code": "FRA",
+          "timezone": "Europe/Paris"
+        }
+      ]
+    },
+    {
+      "id": "sr:complex:3",
+      "name": "Estadio Nacional",
+      "venues": [
+        {
+          "id": "sr:venue:31",
+          "name": "Court Central Anita Lizana",
+          "city_name": "Santiago",
+          "country_name": "Chile",
+          "country_code": "CHL",
+          "timezone": "America/Santiago"
+        },
+        {
+          "id": "sr:venue:32",
+          "name": "Court 2 Nacional",
+          "city_name": "Santiago",
+          "country_name": "Chile",
+          "country_code": "CHL",
+          "timezone": "America/Santiago"
+        }
+      ]
+    },
+    {
+      "id": "sr:complex:4",
+      "name": "All England Lawn Tennis Club",
+      "venues": [
+        {
+          "id": "sr:venue:41",
+          "name": "Centre Court",
+          "city_name": "London",
+          "country_name": "United Kingdom",
+          "country_code": "GBR",
+          "timezone": "Europe/London"
+        },
+        {
+          "id": "sr:venue:42",
+          "name": "No. 1 Court",
+          "city_name": "London",
+          "country_name": "United Kingdom",
+          "country_code": "GBR",
+          "timezone": "Europe/London"
+        }
+      ]
+    },
+    {
+      "id": "sr:complex:5",
+      "name": "Flushing Meadows",
+      "venues": [
+        {
+          "id": "sr:venue:51",
+          "name": "Arthur Ashe Stadium",
+          "city_name": "New York",
+          "country_name": "United States",
+          "country_code": "USA",
+          "timezone": "America/New_York"
+        },
+        {
+          "id": "sr:venue:52",
+          "name": "Louis Armstrong Stadium",
+          "city_name": "New York",
+          "country_name": "United States",
+          "country_code": "USA",
+          "timezone": "America/New_York"
+        }
+      ]
+    }
+  ]
+}

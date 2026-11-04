@@ -1,0 +1,28 @@
+# ==============================================================================
+# CourtIQ: Tennis Data & Analytics Explorer
+# Production & Development Dependencies
+# ==============================================================================
+
+# Core HTTP & API Client
+requests>=2.31.0
+urllib3>=2.0.0
+
+# Data Processing & Validation
+pandas>=2.0.0
+pydantic>=2.5.0
+pydantic-settings>=2.0.0
+
+# Environment & Configuration
+python-dotenv>=1.0.0
+
+# Visualization & Presentation
+streamlit>=1.30.0
+plotly>=5.18.0
+altair>=5.0.0
+
+# Testing & Quality Assurance
+pytest>=8.0.0
+pytest-mock>=3.12.0
+
+# Documentation & PDF Utilities
+pypdf>=4.0.0

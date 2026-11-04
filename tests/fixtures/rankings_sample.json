@@ -1,0 +1,142 @@
+{
+  "generated_at": "2024-11-04T12:00:00Z",
+  "rankings": [
+    {
+      "name": "ATP Doubles",
+      "year": 2024,
+      "week": 44,
+      "competitor_rankings": [
+        {
+          "rank": 1,
+          "movement": 0,
+          "points": 7820,
+          "competitions_played": 22,
+          "competitor": {
+            "id": "sr:competitor:101",
+            "name": "Granollers, Marcel",
+            "country": "Spain",
+            "country_code": "ESP",
+            "abbreviation": "GRA"
+          }
+        },
+        {
+          "rank": 2,
+          "movement": 0,
+          "points": 7820,
+          "competitions_played": 22,
+          "competitor": {
+            "id": "sr:competitor:102",
+            "name": "Zeballos, Horacio",
+            "country": "Argentina",
+            "country_code": "ARG",
+            "abbreviation": "ZEB"
+          }
+        },
+        {
+          "rank": 3,
+          "movement": 1,
+          "points": 7140,
+          "competitions_played": 24,
+          "competitor": {
+            "id": "sr:competitor:103",
+            "name": "Pavic, Mate",
+            "country": "Croatia",
+            "country_code": "CRO",
+            "abbreviation": "PAV"
+          }
+        },
+        {
+          "rank": 4,
+          "movement": -1,
+          "points": 7010,
+          "competitions_played": 24,
+          "competitor": {
+            "id": "sr:competitor:104",
+            "name": "Arevalo, Marcelo",
+            "country": "El Salvador",
+            "country_code": "ESA",
+            "abbreviation": "ARE"
+          }
+        },
+        {
+          "rank": 5,
+          "movement": 0,
+          "points": 6330,
+          "competitions_played": 20,
+          "competitor": {
+            "id": "sr:competitor:105",
+            "name": "Ebden, Matthew",
+            "country": "Australia",
+            "country_code": "AUS",
+            "abbreviation": "EBD"
+          }
+        },
+        {
+          "rank": 6,
+          "movement": 0,
+          "points": 6150,
+          "competitions_played": 19,
+          "competitor": {
+            "id": "sr:competitor:106",
+            "name": "Bopanna, Rohan",
+            "country": "India",
+            "country_code": "IND",
+            "abbreviation": "BOP"
+          }
+        },
+        {
+          "rank": 7,
+          "movement": 2,
+          "points": 5890,
+          "competitions_played": 25,
+          "competitor": {
+            "id": "sr:competitor:107",
+            "name": "Mektic, Nikola",
+            "country": "Croatia",
+            "country_code": "CRO",
+            "abbreviation": "MEK"
+          }
+        },
+        {
+          "rank": 8,
+          "movement": -2,
+          "points": 5500,
+          "competitions_played": 23,
+          "competitor": {
+            "id": "sr:competitor:108",
+            "name": "Koolhof, Wesley",
+            "country": "Netherlands",
+            "country_code": "NED",
+            "abbreviation": "KOO"
+          }
+        },
+        {
+          "rank": 9,
+          "movement": 3,
+          "points": 5100,
+          "competitions_played": 21,
+          "competitor": {
+            "id": "sr:competitor:109",
+            "name": "Thompson, Jordan",
+            "country": "Australia",
+            "country_code": "AUS",
+            "abbreviation": "THO"
+          }
+        },
+        {
+          "rank": 10,
+          "movement": 1,
+          "points": 4950,
+          "competitions_played": 21,
+          "competitor": {
+            "id": "sr:competitor:110",
+            "name": "Purcell, Max",
+            "country": "Australia",
+            "country_code": "AUS",
+            "abbreviation": "PUR"
+          }
+        }
+      ]
+    }
+  ]
+}

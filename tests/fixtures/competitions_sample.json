@@ -1,0 +1,214 @@
+{
+  "generated_at": "2024-11-04T12:00:00Z",
+  "competitions": [
+    {
+      "id": "sr:competition:101",
+      "name": "Australian Open",
+      "parent_id": null,
+      "type": "singles",
+      "gender": "men",
+      "category": {
+        "id": "sr:category:5",
+        "name": "Grand Slam"
+      }
+    },
+    {
+      "id": "sr:competition:102",
+      "name": "Australian Open Doubles Men",
+      "parent_id": "sr:competition:101",
+      "type": "doubles",
+      "gender": "men",
+      "category": {
+        "id": "sr:category:5",
+        "name": "Grand Slam"
+      }
+    },
+    {
+      "id": "sr:competition:103",
+      "name": "Australian Open Doubles Women",
+      "parent_id": "sr:competition:101",
+      "type": "doubles",
+      "gender": "women",
+      "category": {
+        "id": "sr:category:5",
+        "name": "Grand Slam"
+      }
+    },
+    {
+      "id": "sr:competition:104",
+      "name": "Australian Open Qualifying Men",
+      "parent_id": "sr:competition:101",
+      "type": "singles",
+      "gender": "men",
+      "category": {
+        "id": "sr:category:5",
+        "name": "Grand Slam"
+      }
+    },
+    {
+      "id": "sr:competition:105",
+      "name": "Roland Garros",
+      "parent_id": null,
+      "type": "singles",
+      "gender": "men",
+      "category": {
+        "id": "sr:category:5",
+        "name": "Grand Slam"
+      }
+    },
+    {
+      "id": "sr:competition:106",
+      "name": "Roland Garros Doubles Men",
+      "parent_id": "sr:competition:105",
+      "type": "doubles",
+      "gender": "men",
+      "category": {
+        "id": "sr:category:5",
+        "name": "Grand Slam"
+      }
+    },
+    {
+      "id": "sr:competition:107",
+      "name": "Wimbledon",
+      "parent_id": null,
+      "type": "singles",
+      "gender": "men",
+      "category": {
+        "id": "sr:category:5",
+        "name": "Grand Slam"
+      }
+    },
+    {
+      "id": "sr:competition:108",
+      "name": "US Open",
+      "parent_id": null,
+      "type": "singles",
+      "gender": "men",
+      "category": {
+        "id": "sr:category:5",
+        "name": "Grand Slam"
+      }
+    },
+    {
+      "id": "sr:competition:201",
+      "name": "ATP Vienna",
+      "parent_id": null,
+      "type": "singles",
+      "gender": "men",
+      "category": {
+        "id": "sr:category:1",
+        "name": "ATP"
+      }
+    },
+    {
+      "id": "sr:competition:202",
+      "name": "ATP Vienna Doubles",
+      "parent_id": "sr:competition:201",
+      "type": "doubles",
+      "gender": "men",
+      "category": {
+        "id": "sr:category:1",
+        "name": "ATP"
+      }
+    },
+    {
+      "id": "sr:competition:203",
+      "name": "ATP Rome Masters",
+      "parent_id": null,
+      "type": "singles",
+      "gender": "men",
+      "category": {
+        "id": "sr:category:1",
+        "name": "ATP"
+      }
+    },
+    {
+      "id": "sr:competition:204",
+      "name": "ATP Rome Doubles",
+      "parent_id": "sr:competition:203",
+      "type": "doubles",
+      "gender": "men",
+      "category": {
+        "id": "sr:category:1",
+        "name": "ATP"
+      }
+    },
+    {
+      "id": "sr:competition:301",
+      "name": "WTA Brisbane",
+      "parent_id": null,
+      "type": "singles",
+      "gender": "women",
+      "category": {
+        "id": "sr:category:2",
+        "name": "WTA"
+      }
+    },
+    {
+      "id": "sr:competition:302",
+      "name": "WTA Brisbane Doubles",
+      "parent_id": "sr:competition:301",
+      "type": "doubles",
+      "gender": "women",
+      "category": {
+        "id": "sr:category:2",
+        "name": "WTA"
+      }
+    },
+    {
+      "id": "sr:competition:401",
+      "name": "ITF Men M15 Monastir",
+      "parent_id": null,
+      "type": "singles",
+      "gender": "men",
+      "category": {
+        "id": "sr:category:3",
+        "name": "ITF Men"
+      }
+    },
+    {
+      "id": "sr:competition:402",
+      "name": "ITF Men M15 Monastir Doubles",
+      "parent_id": "sr:competition:401",
+      "type": "doubles",
+      "gender": "men",
+      "category": {
+        "id": "sr:category:3",
+        "name": "ITF Men"
+      }
+    },
+    {
+      "id": "sr:competition:403",
+      "name": "ITF Men M25 Madrid",
+      "parent_id": null,
+      "type": "singles",
+      "gender": "men",
+      "category": {
+        "id": "sr:category:3",
+        "name": "ITF Men"
+      }
+    },
+    {
+      "id": "sr:competition:501",
+      "name": "ITF Women W15 Sharm ElSheikh",
+      "parent_id": null,
+      "type": "singles",
+      "gender": "women",
+      "category": {
+        "id": "sr:category:4",
+        "name": "ITF Women"
+      }
+    },
+    {
+      "id": "sr:competition:502",
+      "name": "ITF Women W15 Sharm ElSheikh Doubles",
+      "parent_id": "sr:competition:501",
+      "type": "doubles",
+      "gender": "women",
+      "category": {
+        "id": "sr:category:4",
+        "name": "ITF Women"
+      }
+    }
+  ]
+}
