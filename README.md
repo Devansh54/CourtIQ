@@ -1,196 +1,242 @@
-# 🎾 CourtIQ — Tennis Data & Analytics Explorer
+# CourtIQ
 
-[![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
-[![Database](https://img.shields.io/badge/Database-SQLite%20%7C%20ANSI%20SQL-green.svg)](docs/DATABASE_DESIGN.md)
-[![Streamlit](https://img.shields.io/badge/Frontend-Streamlit-red.svg)](https://streamlit.io/)
-[![Architecture](https://img.shields.io/badge/Architecture-Modular%20Layered-orange.svg)](docs/ARCHITECTURE.md)
-[![License](https://img.shields.io/badge/License-Proprietary-lightgrey.svg)]()
+### Tennis Data & Analytics Explorer
 
-> **Explore Competitions. Analyse Rankings. Discover Tennis.**
+**Explore Competitions. Analyse Rankings. Discover Tennis.**
 
-CourtIQ is a professional, Sportradar-powered sports data exploration and analytics platform. Built using enterprise software engineering principles, the system transforms nested sports API responses into structured relational data, persists them in an ACID-compliant SQL database, executes analytical queries, and delivers actionable sports intelligence through an interactive Streamlit application.
+CourtIQ is a Python-based tennis data exploration and analytics application built around the [Sportradar Tennis API](https://developer.sportradar.com/tennis/reference/tennis-overview). It brings together structured information about tennis competitions, sports complexes and venues, and doubles competitor rankings, with the aim of making that data easier to explore and analyse.
 
----
+The project combines API-based data collection, data validation and transformation, relational storage, SQL analytics, and an interactive [Streamlit](https://streamlit.io/) interface.
 
-## 🏆 Project Architecture & Contribution Model
+## Project domains
 
-CourtIQ is engineered as a three-contributor group product following a strict **50% / 25% / 25%** workload distribution:
+CourtIQ is organised around three related areas of tennis data.
 
-| Contributor | Domain Ownership | Contribution | Status |
-|---|---|:---:|:---:|
-| **Devansh** | Project Architecture, Core Infrastructure & Competitions | **50%** | **COMPLETED & TESTED** |
-| **Venue & Complexes Module Owner** | Complexes, Venues & Related Analytics | **25%** | Ready for Handoff |
-| **Rankings & Analytics Module Owner** | Doubles Competitor Rankings & System Integration | **25%** | Scheduled for Handoff |
+### Competitions and categories
 
-```mermaid
-flowchart TD
-    subgraph UI["Streamlit Multi-Page Application"]
-        APP["app.py (KPI Dashboard)"]
-        P1["pages/1_Competitions.py (Devansh)"]
-        P2["pages/2_Venues.py (Venue Owner)"]
-        P3["pages/3_Rankings.py (Rankings Owner)"]
-    end
+Explore competition metadata and how competitions are organised, including:
 
-    subgraph Core["Shared Core Infrastructure (Devansh)"]
-        CFG["config.py (Pydantic Settings & Env)"]
-        DB["database.py (Transactions & Migrations)"]
-        API["api_client.py (Rate Limits & Exponential Backoff)"]
-        LOG["logging_config.py & exceptions.py"]
-    end
+- Competition names, categories, formats, and gender classifications.
+- Parent competitions and their sub-competition relationships.
+- Competition counts and format distributions across categories.
+- Filtering and searching by competition attributes.
 
-    subgraph Domains["Business Modules"]
-        COMP["domains/competitions/ (Devansh - 50%)"]
-        VEN["domains/venues/ (Venue Owner - 25%)"]
-        RNK["domains/rankings/ (Rankings Owner - 25%)"]
-    end
+### Complexes and venues
 
-    APP & P1 & P2 & P3 --> Core
-    COMP & VEN & RNK --> Core
-    P1 --> COMP
-    P2 --> VEN
-    P3 --> RNK
+Explore tennis facilities and their location information, including:
+
+- Sports complexes and the venues associated with them.
+- Venue names, cities, and countries.
+- Country codes and time zones.
+- Venue counts by complex and country.
+
+### Doubles competitor rankings
+
+Explore doubles ranking information and competitor metadata, including:
+
+- Competitor names and countries.
+- Ranking positions and movement.
+- Ranking points and competitions played.
+- Top-ranked competitors and country-level summaries.
+
+## Data workflow
+
+The application separates data collection and processing from persistence and presentation.
+
+```text
+Sportradar Tennis API
+        |
+        v
+Shared API client
+        |
+        v
+Domain-specific extraction
+        |
+        v
+Transformation and validation
+        |
+        v
+Relational SQL database
+        |
+        v
+Repositories and analytical queries
+        |
+        v
+Streamlit application
 ```
 
----
+The codebase uses shared infrastructure for configuration, API communication, database access, logging, and exceptions. Domain-specific modules contain the data extraction, transformation, persistence, and analytical logic for each subject area.
 
-## 🚀 Quick Start & Installation
+## Technology stack
 
-### 1. Clone the Repository
+| Area | Technology |
+|---|---|
+| Language | Python 3.10+ |
+| Data provider | Sportradar Tennis API v3 |
+| HTTP client | Requests |
+| Data processing | Pandas |
+| Data validation | Pydantic |
+| Relational database | SQLite |
+| Application interface | Streamlit |
+| Visualisation | Plotly |
+| Testing | Pytest |
+
+## Getting started
+
+### Prerequisites
+
+- Python 3.10 or later
+- Git
+- A Sportradar Tennis API key for live API access
+
+### 1. Clone the repository
+
 ```bash
 git clone https://github.com/Devansh54/CourtIQ.git
 cd CourtIQ
 ```
 
-### 2. Set Up Virtual Environment & Dependencies
-```bash
-python -m venv .venv
-# On Windows:
-.venv\Scripts\activate
-# On macOS/Linux:
-source .venv/bin/activate
+### 2. Create and activate a virtual environment
 
+**Windows PowerShell**
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+**macOS / Linux**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 3. Install dependencies
+
+```bash
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 3. Environment Configuration
-Copy the template configuration file:
+### 4. Configure environment variables
+
+Create a local `.env` file from the example template.
+
+**Windows PowerShell**
+
+```powershell
+Copy-Item .env.example .env
+```
+
+**macOS / Linux**
+
 ```bash
 cp .env.example .env
 ```
-*Note: If `SPORTRADAR_API_KEY` is not provided, CourtIQ operates automatically in verified Offline/Mock mode using realistic fixtures located in `tests/fixtures/`, requiring zero paid API keys or network access.*
 
-### 4. Apply Migrations & Ingest Data
-Run the standalone competitions ingestion script:
+Add your Sportradar API key to `.env`:
+
+```dotenv
+SPORTRADAR_API_KEY=your_api_key_here
+```
+
+The example file also contains settings for the API base URL, request timeout, request pacing, retry behaviour, database location, and logging.
+
+**Keep credentials private.** Do not commit `.env`, API keys, or other secrets. The repository includes `.env.example` for configuration reference.
+
+### 5. Ingest competition data
+
+The competition ingestion script applies pending database migrations and runs the competitions data pipeline:
+
 ```bash
 python scripts/ingest_competitions.py
 ```
 
-### 5. Launch the Streamlit Dashboard
+The current API client can use bundled synthetic fixtures when no usable API key is configured, and may fall back to fixtures after repeated network failures. Fixture-backed records are sample data; they are not live Sportradar data.
+
+### 6. Run the application
+
 ```bash
 streamlit run app.py
 ```
-Open your browser at `http://localhost:8501`.
 
-### 6. Run the Test Suite
+Open the local URL printed by Streamlit, usually <http://localhost:8501>.
+
+### 7. Run the tests
+
 ```bash
 python -m pytest tests -v
 ```
 
----
+## Database
 
-## 📊 Database Architecture
+The current database manager uses SQLite. By default, the database file is stored at:
 
-The relational schema consists of six core tables across three business domains:
-
-```mermaid
-erDiagram
-    CATEGORIES ||--o{ COMPETITIONS : "categorizes"
-    COMPETITIONS ||--o{ COMPETITIONS : "sub-competitions (parent_id)"
-    COMPLEXES ||--o{ VENUES : "contains"
-    COMPETITORS ||--o{ COMPETITOR_RANKINGS : "holds rank"
-
-    CATEGORIES {
-        VARCHAR(50) category_id PK
-        VARCHAR(100) category_name
-    }
-    COMPETITIONS {
-        VARCHAR(50) competition_id PK
-        VARCHAR(100) competition_name
-        VARCHAR(50) parent_id FK
-        VARCHAR(20) type
-        VARCHAR(10) gender
-        VARCHAR(50) category_id FK
-    }
-    COMPLEXES {
-        VARCHAR(50) complex_id PK
-        VARCHAR(100) complex_name
-    }
-    VENUES {
-        VARCHAR(50) venue_id PK
-        VARCHAR(100) venue_name
-        VARCHAR(100) city_name
-        VARCHAR(100) country_name
-        CHAR(3) country_code
-        VARCHAR(100) timezone
-        VARCHAR(50) complex_id FK
-    }
-    COMPETITORS {
-        VARCHAR(50) competitor_id PK
-        VARCHAR(100) name
-        VARCHAR(100) country
-        CHAR(3) country_code
-        VARCHAR(10) abbreviation
-    }
-    COMPETITOR_RANKINGS {
-        INTEGER rank_id PK
-        INT rank
-        INT movement
-        INT points
-        INT competitions_played
-        VARCHAR(50) competitor_id FK
-    }
+```text
+data/courtiq.db
 ```
 
-Detailed specifications and ERD: [`docs/DATABASE_DESIGN.md`](docs/DATABASE_DESIGN.md)
+Database schema changes are maintained as ordered SQL migration files in `sql/migrations/`. The data model is organised around these related entities:
 
----
-
-## ⚡ Competitions Domain & Verified SQL Queries
-
-All 7 analytical SQL queries mandated by the project guide have been codified and verified:
-
-| Query ID | Project Specification | SQL File |
+| Data area | Tables | Relationship |
 |---|---|---|
-| **Q1** | List all competitions along with their category name | [`sql/queries/competitions/q1_list_with_category.sql`](sql/queries/competitions/q1_list_with_category.sql) |
-| **Q2** | Count the number of competitions in each category | [`sql/queries/competitions/q2_count_by_category.sql`](sql/queries/competitions/q2_count_by_category.sql) |
-| **Q3** | Find all competitions of type 'doubles' | [`sql/queries/competitions/q3_doubles_competitions.sql`](sql/queries/competitions/q3_doubles_competitions.sql) |
-| **Q4** | Get competitions that belong to a specific category (e.g. ITF Men) | [`sql/queries/competitions/q4_by_specific_category.sql`](sql/queries/competitions/q4_by_specific_category.sql) |
-| **Q5** | Identify parent competitions and their sub-competitions | [`sql/queries/competitions/q5_parent_sub_hierarchy.sql`](sql/queries/competitions/q5_parent_sub_hierarchy.sql) |
-| **Q6** | Analyze the distribution of competition types by category | [`sql/queries/competitions/q6_type_distribution_by_category.sql`](sql/queries/competitions/q6_type_distribution_by_category.sql) |
-| **Q7** | List all competitions with no parent (top-level competitions) | [`sql/queries/competitions/q7_top_level_competitions.sql`](sql/queries/competitions/q7_top_level_competitions.sql) |
+| Competitions | `categories`, `competitions` | A category can contain multiple competitions; competitions can reference a parent competition. |
+| Venues | `complexes`, `venues` | A complex can contain multiple venues. |
+| Rankings | `competitors`, `competitor_rankings` | A competitor can have associated ranking records. |
 
----
+For table definitions, constraints, and the entity-relationship diagram, see [Database Design](docs/DATABASE_DESIGN.md).
 
-## 📚 Master Documentation Repository
+## Repository structure
 
-All architectural decisions, schemas, and guidelines are maintained inside the repository:
+```text
+CourtIQ/
+├── app.py                         # Streamlit application entry point
+├── pages/                         # Streamlit pages
+├── src/
+│   └── courtiq/
+│       ├── core/                  # Configuration, API client and database access
+│       ├── domains/
+│       │   ├── competitions/      # Competition data and analytics
+│       │   ├── venues/             # Complex and venue domain
+│       │   └── rankings/           # Competitor ranking domain
+│       ├── ingestion/              # Data ingestion orchestration
+│       └── utils/                  # Shared application utilities
+├── sql/
+│   ├── migrations/                # Database schema migrations
+│   └── queries/                   # Domain-specific analytical SQL
+├── scripts/                       # Command-line utilities
+├── tests/
+│   ├── fixtures/                  # Sample API payloads
+│   ├── unit/                      # Unit tests
+│   └── integration/               # Integration tests
+└── docs/                           # Project and technical documentation
+```
 
-- [`docs/PROJECT_OVERVIEW.md`](docs/PROJECT_OVERVIEW.md): Executive summary, business context, and use cases.
-- [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md): Comprehensive Requirements Traceability Matrix (56 requirements).
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): System architecture, layered design, and sequence diagrams.
-- [`docs/TEAM_WORK_ALLOCATION.md`](docs/TEAM_WORK_ALLOCATION.md): 50/25/25 engineering workload breakdown and governance.
-- [`docs/DATABASE_DESIGN.md`](docs/DATABASE_DESIGN.md): Relational database architecture, ERD, and migration rules.
-- [`docs/API_DOCUMENTATION.md`](docs/API_DOCUMENTATION.md): Sportradar Tennis API v3 endpoints, rate limits, and schemas.
-- [`docs/DATA_DICTIONARY.md`](docs/DATA_DICTIONARY.md): Column-level schema definitions across all 6 tables.
-- [`docs/DEVELOPMENT_GUIDELINES.md`](docs/DEVELOPMENT_GUIDELINES.md): PEP 8 standards, parameterized SQL rules, and Git workflow.
-- [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md): 7-day agile sprint schedule and milestones.
-- [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md): Real-time task completion and milestone tracker.
-- [`docs/reference/PROJECT_GUIDE.pdf`](docs/reference/PROJECT_GUIDE.pdf): Preserved original 14-page project specification.
-- [`docs/handoffs/VENUES_MODULE_HANDOFF.md`](docs/handoffs/VENUES_MODULE_HANDOFF.md): Master developer handoff prompt for Venue & Complexes Owner.
+## API references
 
----
+CourtIQ uses the Sportradar Tennis API. Consult the official documentation for endpoint specifications, response formats, authentication, and subscription requirements:
 
-## 🤝 Developer Handoff
+- [Sportradar Tennis API overview](https://developer.sportradar.com/tennis/reference/tennis-overview)
+- [Competitions endpoint](https://developer.sportradar.com/tennis/reference/competitions)
+- [Complexes endpoint](https://developer.sportradar.com/tennis/reference/complexes)
+- [Doubles competitor rankings endpoint](https://developer.sportradar.com/tennis/reference/doubles-competitor-rankings)
 
-For instructions on implementing Milestone 2, please consult:  
-👉 [`docs/handoffs/VENUES_MODULE_HANDOFF.md`](docs/handoffs/VENUES_MODULE_HANDOFF.md)
+API availability, request limits, and quotas depend on the Sportradar plan associated with the API key.
+
+## Project documentation
+
+Further technical details are maintained in the `docs/` directory:
+
+- [Project overview](docs/PROJECT_OVERVIEW.md)
+- [Requirements](docs/REQUIREMENTS.md)
+- [System architecture](docs/ARCHITECTURE.md)
+- [Database design](docs/DATABASE_DESIGN.md)
+- [API documentation](docs/API_DOCUMENTATION.md)
+- [Data dictionary](docs/DATA_DICTIONARY.md)
+- [Development guidelines](docs/DEVELOPMENT_GUIDELINES.md)
+- [Original project guide](docs/reference/PROJECT_GUIDE.pdf)
+
+## License
+
+The project metadata identifies CourtIQ as proprietary. Public repository visibility does not grant permission to reuse, modify, or redistribute the code. Contact the repository owner for permission.
