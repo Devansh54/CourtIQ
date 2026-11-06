@@ -1,42 +1,82 @@
 # CourtIQ — Development Guidelines & Engineering Conventions
 
 **Product Name:** CourtIQ – Tennis Data & Analytics Explorer  
-**Version:** 1.0.0  
+**Version:** 2.0.0 (PostgreSQL Foundation)  
 **Lead Architect:** Devansh  
+**Target Database:** PostgreSQL 16+ via SQLAlchemy 2.x & Psycopg 3  
 
 ---
 
 ## 1. Coding & Python Standards
 
-All code contributed to the CourtIQ platform must adhere strictly to Python best practices:
+All code contributed to the CourtIQ platform must adhere strictly to professional Python engineering standards:
 
-1. **PEP 8 Compliance:** All code must conform to PEP 8 styling conventions. Use 4-space indentation, clear variable naming, and standard line-length limits.
+1. **PEP 8 Compliance:** 4-space indentation, descriptive variable naming, standard line lengths.
 2. **Type Annotations:** Function definitions must include type hints for all parameters and return types (e.g., `def get_competition(comp_id: str) -> Optional[Competition]:`).
-3. **Docstrings & Comments:** Every module, class, and public function must have Google-style or Sphinx-style docstrings explaining purpose, arguments, and return types. Preserve all existing docstrings and architectural notes.
-4. **Error Handling:** Never catch generic exceptions silently (avoid `except: pass`). Catch domain-specific exceptions, log the failure with stack trace where appropriate, and re-raise or handle gracefully.
+3. **Docstrings & Comments:** Every module, class, and public function must have docstrings explaining purpose, parameters, return values, and exceptions. Preserve existing comments and docstrings.
+4. **Defensive Error Handling:** Catch domain-specific exceptions (`DatabaseError`, `APIClientError`, `ValidationError`). Never catch generic exceptions silently (`except: pass`).
 5. **Security & Credentials:**
-   - NEVER commit `.env` or plain-text credentials to Git.
-   - Use `courtiq.core.config.get_settings()` to load environment variables.
+   - NEVER commit `.env` or credentials to Git.
+   - Always access runtime settings through `courtiq.core.config.get_settings()`.
 
 ---
 
-## 2. Database & SQL Engineering Standards
+## 2. PostgreSQL & Database Engineering Standards
 
-1. **Strictly Parameterized Queries:** Under no circumstances should string concatenation or raw f-strings be used to interpolate user input into SQL queries. Always use standard parameter binding (`?` for SQLite, `%s` for MySQL/Postgres).
-   ```python
-   # Correct:
-   cursor.execute("SELECT * FROM competitions WHERE type = ?", (comp_type,))
-   
-   # FORBIDDEN (Vulnerable to SQL Injection):
-   cursor.execute(f"SELECT * FROM competitions WHERE type = '{comp_type}'")
+CourtIQ uses **PostgreSQL 16+** with **SQLAlchemy 2.x Core** and **Psycopg 3**. Contributors (Mansi and Nilakshi) must follow these database conventions:
+
+### 2.1 Strictly Named Parameterized Queries
+Under no circumstances should string concatenation or raw f-strings be used to interpolate values into SQL. Always use SQLAlchemy named parameters (`:param_name`):
+
+```python
+# CORRECT (Safe Parameterized Binding):
+stmt = "SELECT * FROM venues WHERE city_name = :city_target AND country_code = :country_target;"
+params = {"city_target": "Melbourne", "country_target": "AUS"}
+df = db.fetch_df(stmt, params=params)
+
+# FORBIDDEN (Vulnerable to SQL Injection & dialect incompatibilities):
+db.fetch_df(f"SELECT * FROM venues WHERE city_name = '{city}'")
+```
+
+### 2.2 Idempotent Upserts (`ON CONFLICT DO UPDATE`)
+All batch inserts must be idempotent to allow pipelines to re-run without throwing unique constraint or primary key errors:
+
+```sql
+INSERT INTO complexes (complex_id, complex_name)
+VALUES (:complex_id, :complex_name)
+ON CONFLICT (complex_id) DO UPDATE SET
+    complex_name = EXCLUDED.complex_name;
+```
+
+### 2.3 Context-Managed Transactions
+All writes (INSERT, UPDATE, DELETE) must execute inside `db.transaction()` blocks to guarantee ACID atomicity:
+
+```python
+with db.transaction() as conn:
+    conn.execute(statement, params)
+    # Automatically committed upon normal block exit
+    # Automatically rolled back if any exception is raised
+```
+
+### 2.4 Alembic Schema Migrations
+Do NOT execute manual DDL or raw SQL scripts directly against the database. All new domain tables must be added through Alembic revisions in `alembic/versions/`:
+
+1. **Creating a new revision:**
+   ```bash
+   alembic revision -m "add_venues_and_complexes"
    ```
-2. **ACID Transaction Management:** All writes (INSERT, UPDATE, DELETE) must execute inside explicit transactions using `db.transaction()`:
-   ```python
-   with db.transaction() as conn:
-       conn.execute(...)
+2. **Implementing `upgrade()` and `downgrade()`:**
+   Use standard `op.create_table()`, `op.add_column()`, and `op.create_index()` constructs.
+3. **Applying the migration:**
+   ```bash
+   alembic upgrade head
    ```
-3. **Referential Integrity:** Foreign keys must always be respected. Parents must be inserted before children (`categories` before `competitions`, `complexes` before `venues`, `competitors` before `competitor_rankings`).
-4. **Migration Standards:** All table creation and structural changes must be codified in `sql/migrations/` using three-digit prefixes (`001_competitions.sql`, `002_venues.sql`, `003_rankings.sql`).
+
+### 2.5 Referential Dependency Order
+PostgreSQL strictly enforces foreign keys. Always persist entities in referential order:
+1. `categories` before `competitions` (and parent competitions before sub-competitions)
+2. `complexes` before `venues`
+3. `competitors` before `competitor_rankings`
 
 ---
 
@@ -44,59 +84,71 @@ All code contributed to the CourtIQ platform must adhere strictly to Python best
 
 ```mermaid
 gitGraph
-   commit id: "Initial Commit & Docs"
+   commit id: "Initial Architecture"
    branch devansh-foundation-competitions
    checkout devansh-foundation-competitions
-   commit id: "Core Infra & Competitions"
-   commit id: "Competitions Tests & Docs"
+   commit id: "SQLite Foundation (50%)"
+   branch feature/postgresql-database-migration
+   checkout feature/postgresql-database-migration
+   commit id: "PostgreSQL Migration & Alembic"
+   checkout devansh-foundation-competitions
+   merge feature/postgresql-database-migration id: "Merge PostgreSQL Foundation"
    checkout main
-   merge devansh-foundation-competitions id: "Merge Foundation (50%)"
+   merge devansh-foundation-competitions id: "Merge Core Foundation (50%)"
    branch feature/venues-complexes
    checkout feature/venues-complexes
-   commit id: "Venues Module (25%)"
+   commit id: "Mansi Venues Module (25%)"
    checkout main
    merge feature/venues-complexes id: "Merge Venues (75%)"
    branch feature/competitor-rankings
    checkout feature/competitor-rankings
-   commit id: "Rankings Module (25%)"
+   commit id: "Nilakshi Rankings (25%)"
    checkout main
-   merge feature/competitor-rankings id: "Final Integration (100%)"
+   merge feature/competitor-rankings id: "Final Release Verification (100%)"
 ```
 
-### 3.1 Branching Rules
+### Branching Rules
 - **`main`**: Protected primary production branch. Contains stable, integrated milestones.
-- **`devansh-foundation-competitions`**: Devansh's working branch for Core Infrastructure and Competitions Domain (50%).
-- **`feature/venues-complexes`**: Venue & Complexes Module Owner's development branch (25%).
-- **`feature/competitor-rankings`**: Rankings & Analytics Module Owner's development branch (25%).
-
-### 3.2 Commit Message Standards
-Use clear imperative commit messages with domain tags:
-- `feat(core): implement sportradar api client with rate limiting`
-- `feat(competitions): add json transformer and pydantic models`
-- `feat(competitions): implement 7 required sql queries and analytics service`
-- `test(competitions): add unit and integration pipeline tests`
-- `docs(handoff): prepare venues module developer handoff prompt`
+- **`devansh-foundation-competitions`**: Devansh's foundation branch (Overall Architecture, Core Infra, Competitions Domain).
+- **`feature/venues-complexes`**: Mansi's development branch (Complexes, Venues & Related Analytics — 25%).
+- **`feature/competitor-rankings`**: Nilakshi's development branch (Doubles Competitor Rankings & Final Verification — 25%).
 
 ---
 
-## 4. Module Ownership Boundaries & Change Management
+## 4. Module Ownership Boundaries
 
-| Functional Area | Primary Owner | Modification Guidelines |
+| Functional Area | Contributor | Boundary & Modification Rules |
 |---|---|---|
-| `src/courtiq/core/` (API, DB, Config, Logging) | Devansh | **IMMUTABLE for subsequent owners.** Do not rewrite or replace. If an enhancement is required, document it in an issue. |
-| `src/courtiq/domains/competitions/` | Devansh | Domain-owned by Devansh. Venues and Rankings owners must not edit. |
-| `src/courtiq/domains/venues/` | Venue & Complexes Module Owner | Domain-owned. |
-| `src/courtiq/domains/rankings/` | Rankings & Analytics Module Owner | Domain-owned. |
-| `sql/migrations/001_competitions.sql` | Devansh | Immutable once merged. |
-| `sql/migrations/002_venues.sql` | Venue & Complexes Module Owner | Domain-owned migration. |
-| `sql/migrations/003_rankings.sql` | Rankings & Analytics Module Owner | Domain-owned migration. |
-| `app.py` & `src/courtiq/utils/formatting.py` | Devansh | Base UI shell owned by Devansh. Module owners contribute page content to `pages/`. |
+| `src/courtiq/core/` (DB, Pooling, Config, API Client) | Devansh | **IMMUTABLE for subsequent owners.** Shared infrastructure. |
+| `src/courtiq/domains/competitions/` | Devansh | Domain-owned by Devansh. |
+| `src/courtiq/domains/venues/` | Mansi | Domain-owned by Mansi. |
+| `src/courtiq/domains/rankings/` | Nilakshi | Domain-owned by Nilakshi. |
+| `alembic/versions/0001_initial_competitions.py` | Devansh | Baseline schema. Immutable. |
+| `alembic/versions/0002_venues.py` | Mansi | Venues domain migration. |
+| `alembic/versions/0003_rankings.py` | Nilakshi | Rankings domain migration. |
+| `app.py` & `src/courtiq/utils/formatting.py` | Devansh | Core UI framework and layout. |
+| `pages/1_Competitions.py` | Devansh | Competitions Explorer page. |
+| `pages/2_Venues.py` | Mansi | Venues Explorer page. |
+| `pages/3_Rankings.py` | Nilakshi | Rankings Explorer page. |
 
 ---
 
-## 5. Streamlit UI Development Standards
+## 5. Local Testing & Verification Workflow
 
-1. **Shared Layout & Styling:** Always import and apply `apply_custom_css()` from `courtiq.utils.formatting`. Maintain consistent headers, cards, and KPI metrics.
-2. **Database Query Caching:** Wrap database reads with `@st.cache_data(ttl=60)` or read through the repository layer to prevent redundant disk I/O on UI rerenders.
-3. **Empty States & Error Handling:** When a table has zero rows (e.g., before ingestion has run), display an informative callout box directing the user to run the ingestion command, rather than throwing an unhandled exception or showing a blank page.
-4. **Responsive Visualizations:** Use Plotly charts with responsive sizing (`use_container_width=True`) and clean tennis-themed color palettes (`#1E88E5`, `#26A69A`, `#FFA726`, `#D81B60`).
+Before submitting a pull request or handing off work:
+1. Ensure the PostgreSQL container is running:
+   ```bash
+   docker compose up -d
+   ```
+2. Run Alembic migrations:
+   ```bash
+   alembic upgrade head
+   ```
+3. Run the full pytest suite (including concurrency and unit tests):
+   ```bash
+   pytest tests -v
+   ```
+4. Verify Streamlit dashboard rendering:
+   ```bash
+   streamlit run app.py
+   ```
