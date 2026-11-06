@@ -294,6 +294,7 @@ class DatabaseManager:
             else:
                 migration_url = self.url
             alembic_cfg.set_main_option("sqlalchemy.url", migration_url)
+            alembic_cfg.attributes["target_url"] = migration_url
 
             logger.info("Running Alembic migrations (upgrade head)...")
             alembic.command.upgrade(alembic_cfg, "head")

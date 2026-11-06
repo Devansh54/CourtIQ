@@ -60,8 +60,18 @@ def test_db(tmp_path: Path) -> Generator[DatabaseManager, None, None]:
                 db_mgr.execute("DELETE FROM categories;")
             except Exception:
                 pass
+            try:
+                db_mgr._engine.dispose()
+            except Exception:
+                pass
     else:
         db_file = tmp_path / "test_courtiq.db"
         db_mgr = DatabaseManager(db_file)
         db_mgr.run_migrations()
-        yield db_mgr
+        try:
+            yield db_mgr
+        finally:
+            try:
+                db_mgr._engine.dispose()
+            except Exception:
+                pass

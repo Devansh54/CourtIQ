@@ -24,8 +24,10 @@ if config.config_file_name is not None:
 
 # Set database URL dynamically from CourtIQ centralized settings
 settings = get_settings()
-db_url = config.get_main_option("sqlalchemy.url")
-if not db_url or "localhost:5432" in db_url:
+custom_url = config.attributes.get("target_url")
+if custom_url:
+    config.set_main_option("sqlalchemy.url", custom_url)
+else:
     target_url = settings.migration_database_url or settings.database_url
     config.set_main_option("sqlalchemy.url", target_url)
 
@@ -59,19 +61,8 @@ def run_migrations_online() -> None:
 
     if connectable is None:
         url = config.get_main_option("sqlalchemy.url")
-        # Handle SQLite vs PostgreSQL pool class appropriately
-        if url and url.startswith("sqlite"):
-            connectable = engine_from_config(
-                config.get_section(config.config_ini_section, {}),
-                prefix="sqlalchemy.",
-                poolclass=pool.NullPool,
-            )
-        else:
-            connectable = engine_from_config(
-                config.get_section(config.config_ini_section, {}),
-                prefix="sqlalchemy.",
-                poolclass=pool.NullPool,
-            )
+        from sqlalchemy import create_engine
+        connectable = create_engine(url, poolclass=pool.NullPool)
 
     with connectable.connect() as connection:
         context.configure(

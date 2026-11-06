@@ -16,6 +16,7 @@ def test_settings_defaults():
 
 def test_is_mock_mode_detection(monkeypatch):
     """Verify mock mode correctly triggers on empty or placeholder API keys."""
+    monkeypatch.delenv("COURTIQ_MODE", raising=False)
     monkeypatch.setenv("SPORTRADAR_API_KEY", "your_sportradar_api_key_here")
     s1 = Settings()
     assert s1.is_mock_mode is True

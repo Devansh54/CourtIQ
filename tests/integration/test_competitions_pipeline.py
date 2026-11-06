@@ -1,18 +1,14 @@
 """Integration tests for CourtIQ Competitions End-to-End Pipeline."""
 
-from pathlib import Path
 from courtiq.core.database import DatabaseManager
 from courtiq.domains.competitions.analytics import CompetitionsAnalytics
 from courtiq.domains.competitions.repository import CompetitionsRepository
 from courtiq.ingestion.runner import IngestionRunner
 
 
-def test_competitions_end_to_end_pipeline(tmp_path: Path):
+def test_competitions_end_to_end_pipeline(test_db: DatabaseManager):
     """Test full execution: Migrations -> Extraction -> Transformation -> SQL Storage -> Analytics."""
-    db_file = tmp_path / "integration_courtiq.db"
-    db_mgr = DatabaseManager(db_file)
-
-    runner = IngestionRunner(db_mgr)
+    runner = IngestionRunner(test_db)
     result = runner.ingest_competitions()
 
     assert result.status == "SUCCESS"
@@ -21,7 +17,7 @@ def test_competitions_end_to_end_pipeline(tmp_path: Path):
     assert result.errors == 0
 
     # Verify repository access
-    repo = CompetitionsRepository(db_mgr)
+    repo = CompetitionsRepository(test_db)
     assert repo.get_competition_count() == result.competitions_ingested
     assert repo.get_category_count() == result.categories_ingested
 

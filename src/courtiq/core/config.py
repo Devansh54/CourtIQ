@@ -47,7 +47,7 @@ class Settings:
         # Primary Database Configuration (PostgreSQL 16+ via Psycopg 3)
         self.database_url: str = os.getenv(
             "DATABASE_URL",
-            "postgresql+psycopg://courtiq_app:courtiq_app_password@localhost:5432/courtiq",
+            "postgresql+psycopg://courtiq_app:courtiq_app_password@127.0.0.1:5432/courtiq",
         )
 
         # Migration Database Configuration (Dedicated DDL role)
@@ -55,7 +55,7 @@ class Settings:
             "MIGRATION_DATABASE_URL",
             os.getenv(
                 "DATABASE_URL",
-                "postgresql+psycopg://courtiq_migrator:courtiq_migrator_password@localhost:5432/courtiq",
+                "postgresql+psycopg://courtiq_migrator:courtiq_migrator_password@127.0.0.1:5432/courtiq",
             ),
         )
 
