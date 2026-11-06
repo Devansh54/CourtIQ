@@ -140,10 +140,15 @@ env_col1, env_col2 = st.columns(2)
 
 with env_col1:
     st.markdown("#### Runtime Configuration")
-    mode_text = "Synthetic Mock Fixture Mode (Offline)" if settings.is_mock_mode else "Sportradar Live API Mode"
-    st.markdown(f"- **Operating Mode:** `{mode_text}`")
-    st.markdown(f"- **Relational Database:** `SQLite (ANSI SQL Compatible)`")
-    st.markdown(f"- **Database Path:** `{settings.courtiq_db_path}`")
+    mode_text = "Synthetic Mock / Demo Mode" if settings.is_demo_mode else "Sportradar Live API Mode"
+    db_target = "PostgreSQL 16+ (Primary Production Engine)" if settings.is_postgres else "SQLite (Fallback / Local Testing)"
+    st.markdown(f"- **Operating Mode:** `{settings.courtiq_mode}` ({mode_text})")
+    st.markdown(f"- **Relational Database:** `{db_target}`")
+    st.markdown(f"- **Database Dialect:** `{settings.db_dialect}`")
+    if settings.is_postgres:
+        st.markdown(f"- **Pool Configuration:** `size={settings.db_pool_size}, max_overflow={settings.db_pool_max_overflow}, timeout={settings.db_pool_timeout}s`")
+    else:
+        st.markdown(f"- **Database Path:** `{settings.courtiq_db_path}`")
     st.markdown(f"- **API Base Endpoint:** `{settings.sportradar_base_url}`")
     st.markdown(f"- **Rate Limit Safety:** `{settings.sportradar_rate_limit_rps} RPS`")
 
