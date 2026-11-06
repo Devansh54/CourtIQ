@@ -43,7 +43,7 @@ docker compose up -d
 ```
 
 This launches:
-- **Image:** `postgres:16-alpine`
+- **Image:** `postgres:18-alpine`
 - **Container Name:** `courtiq_postgres`
 - **Host Port Binding:** `127.0.0.1:5432:5432`
 - **Initialization Script:** `docker/postgres/init/01_init_roles.sql` executes automatically on first start, creating the `courtiq` database, roles, and grants.
