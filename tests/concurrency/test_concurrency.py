@@ -12,14 +12,15 @@ from courtiq.domains.competitions.repository import CompetitionsRepository
 from courtiq.domains.competitions.schemas import Category, Competition
 
 
-def test_concurrent_read_queries(test_db: DatabaseManager, sample_competitions_payload):
-    """Verify that multiple concurrent threads can query the database simultaneously."""
+def test_concurrent_read_queries(postgres_test_db: DatabaseManager, sample_competitions_payload):
+    """Verify that multiple concurrent threads can query the PostgreSQL database simultaneously."""
+    assert postgres_test_db.is_postgres is True, "Concurrency test must run against PostgreSQL"
     from courtiq.domains.competitions.transformer import CompetitionsTransformer
 
     # Seed test database
     transformer = CompetitionsTransformer()
     categories, competitions = transformer.transform(sample_competitions_payload)
-    repo = CompetitionsRepository(test_db)
+    repo = CompetitionsRepository(postgres_test_db)
     repo.save_categories(categories)
     repo.save_competitions(competitions)
 
@@ -27,7 +28,7 @@ def test_concurrent_read_queries(test_db: DatabaseManager, sample_competitions_p
     iterations_per_thread = 5
 
     def worker_read_task(worker_id: int) -> int:
-        local_repo = CompetitionsRepository(test_db)
+        local_repo = CompetitionsRepository(postgres_test_db)
         total_rows_fetched = 0
         for _ in range(iterations_per_thread):
             # Alternate through the various analytical queries
@@ -52,8 +53,9 @@ def test_concurrent_read_queries(test_db: DatabaseManager, sample_competitions_p
     assert all(r > 0 for r in results)
 
 
-def test_concurrent_isolated_transactions(test_db: DatabaseManager):
-    """Verify that concurrent writes in isolated transactions succeed without deadlock."""
+def test_concurrent_isolated_transactions(postgres_test_db: DatabaseManager):
+    """Verify that concurrent writes in isolated transactions succeed without deadlock on PostgreSQL."""
+    assert postgres_test_db.is_postgres is True, "Concurrency test must run against PostgreSQL"
     num_threads = 8
 
     def worker_write_task(worker_id: int) -> str:
@@ -61,14 +63,14 @@ def test_concurrent_isolated_transactions(test_db: DatabaseManager):
         cat_name = f"Concurrent Category {worker_id}"
 
         # Write inside transaction
-        test_db.execute(
+        postgres_test_db.execute(
             "INSERT INTO categories (category_id, category_name) VALUES (:id, :name) "
             "ON CONFLICT (category_id) DO UPDATE SET category_name = EXCLUDED.category_name;",
             {"id": cat_id, "name": cat_name},
         )
 
         # Immediate read-back
-        row = test_db.fetch_one(
+        row = postgres_test_db.fetch_one(
             "SELECT category_name FROM categories WHERE category_id = :id;",
             {"id": cat_id},
         )

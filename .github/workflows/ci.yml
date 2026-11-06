@@ -47,31 +47,49 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-cov
 
-      - name: Initialize PostgreSQL Roles and Permissions
+      - name: Initialize PostgreSQL Roles and Dual Databases
         env:
           PGPASSWORD: postgres_admin_password
+          COURTIQ_MIGRATOR_PASSWORD: ci_test_migrator_password
+          COURTIQ_APP_PASSWORD: ci_test_app_password
         run: |
-          psql -h localhost -U postgres -d courtiq -f docker/postgres/init/01_init_roles.sql
+          psql -h localhost -U postgres -d postgres -f docker/postgres/init/01_init_roles.sql
 
-      - name: Run Alembic Database Migrations
+      - name: Run Alembic Database Migrations on Main Database
         env:
-          MIGRATION_DATABASE_URL: postgresql+psycopg://courtiq_migrator:courtiq_migrator_password@localhost:5432/courtiq
+          MIGRATION_DATABASE_URL: postgresql+psycopg://courtiq_migrator:ci_test_migrator_password@localhost:5432/courtiq
         run: |
           alembic upgrade head
 
       - name: Test SQLite to PostgreSQL Migration Script (Dry Run & Apply)
         env:
-          MIGRATION_DATABASE_URL: postgresql+psycopg://courtiq_migrator:courtiq_migrator_password@localhost:5432/courtiq
+          DATABASE_URL: postgresql+psycopg://courtiq_app:ci_test_app_password@localhost:5432/courtiq
+          MIGRATION_DATABASE_URL: postgresql+psycopg://courtiq_migrator:ci_test_migrator_password@localhost:5432/courtiq
         run: |
           python scripts/migrate_sqlite_to_postgres.py --dry-run
           python scripts/migrate_sqlite_to_postgres.py --apply
 
-      - name: Run Pytest Test Suite against PostgreSQL
+      - name: Run Pytest Test Suite against Disposable Test Database
         env:
           COURTIQ_MODE: DEMO
-          DATABASE_URL: postgresql+psycopg://courtiq_app:courtiq_app_password@localhost:5432/courtiq
-          MIGRATION_DATABASE_URL: postgresql+psycopg://courtiq_migrator:courtiq_migrator_password@localhost:5432/courtiq
-          TEST_DATABASE_URL: postgresql+psycopg://courtiq_migrator:courtiq_migrator_password@localhost:5432/courtiq
+          DATABASE_URL: postgresql+psycopg://courtiq_app:ci_test_app_password@localhost:5432/courtiq
+          MIGRATION_DATABASE_URL: postgresql+psycopg://courtiq_migrator:ci_test_migrator_password@localhost:5432/courtiq
+          TEST_DATABASE_URL: postgresql+psycopg://courtiq_migrator:ci_test_migrator_password@localhost:5432/courtiq_test
         run: |
           pytest tests -v --durations=10
 
+      - name: Verify Main Database Integrity After Test Suite Execution
+        run: |
+          python -c "
+          import psycopg
+          with psycopg.connect('host=localhost port=5432 dbname=courtiq user=courtiq_app password=ci_test_app_password') as conn:
+              with conn.cursor() as cur:
+                  cur.execute('SELECT COUNT(*) FROM categories;')
+                  cats = cur.fetchone()[0]
+                  cur.execute('SELECT COUNT(*) FROM competitions;')
+                  comps = cur.fetchone()[0]
+                  print(f'Post-test main database state: {cats} categories, {comps} competitions')
+                  assert cats == 5, f'Expected 5 categories, got {cats}'
+                  assert comps == 19, f'Expected 19 competitions, got {comps}'
+          print('PASS: Main application database preserved without test pollution!')
+          "

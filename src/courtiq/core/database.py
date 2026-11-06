@@ -21,7 +21,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.pool import QueuePool, StaticPool
 
 from courtiq.core.config import get_settings
-from courtiq.core.exceptions import DatabaseError, MigrationError
+from courtiq.core.exceptions import ConfigurationError, DatabaseError, MigrationError
 from courtiq.core.logging_config import get_logger
 
 logger = get_logger("core.database")
@@ -289,7 +289,12 @@ class DatabaseManager:
             alembic_cfg.set_main_option("script_location", str(settings.project_root / "alembic"))
 
             # Determine migration database connection URL
-            if self.url == settings.database_url and settings.migration_database_url:
+            if self.url == settings.database_url:
+                if not settings.migration_database_url:
+                    raise ConfigurationError(
+                        "MIGRATION_DATABASE_URL is not configured. "
+                        "Alembic migrations require dedicated MIGRATION_DATABASE_URL with courtiq_migrator credentials."
+                    )
                 migration_url = settings.migration_database_url
             else:
                 migration_url = self.url

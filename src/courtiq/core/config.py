@@ -44,22 +44,15 @@ class Settings:
         self.sportradar_max_retries: int = int(os.getenv("SPORTRADAR_MAX_RETRIES", "3"))
         self.sportradar_backoff_factor: float = float(os.getenv("SPORTRADAR_BACKOFF_FACTOR", "1.5"))
 
-        # Primary Database Configuration (PostgreSQL 16+ via Psycopg 3)
-        self.database_url: str = os.getenv(
-            "DATABASE_URL",
-            "postgresql+psycopg://courtiq_app:courtiq_app_password@127.0.0.1:5432/courtiq",
-        )
+        # Primary Database Configuration (PostgreSQL 18 via Psycopg 3)
+        # Identifies the restricted runtime application role 'courtiq_app' (DML only)
+        self.database_url: str = os.getenv("DATABASE_URL", "")
 
-        # Migration Database Configuration (Dedicated DDL role)
-        self.migration_database_url: str = os.getenv(
-            "MIGRATION_DATABASE_URL",
-            os.getenv(
-                "DATABASE_URL",
-                "postgresql+psycopg://courtiq_migrator:courtiq_migrator_password@127.0.0.1:5432/courtiq",
-            ),
-        )
+        # Migration Database Configuration (Dedicated DDL role 'courtiq_migrator')
+        # Does NOT silently fall back to DATABASE_URL or predictable password defaults.
+        self.migration_database_url: Optional[str] = os.getenv("MIGRATION_DATABASE_URL")
 
-        # Optional Integration Test Database URL
+        # Disposable Automated Test Database URL (e.g. courtiq_test)
         self.test_database_url: Optional[str] = os.getenv("TEST_DATABASE_URL")
 
         # Database Connection Pool Settings

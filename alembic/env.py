@@ -28,8 +28,13 @@ custom_url = config.attributes.get("target_url")
 if custom_url:
     config.set_main_option("sqlalchemy.url", custom_url)
 else:
-    target_url = settings.migration_database_url or settings.database_url
-    config.set_main_option("sqlalchemy.url", target_url)
+    if not settings.migration_database_url:
+        from courtiq.core.exceptions import ConfigurationError
+        raise ConfigurationError(
+            "MIGRATION_DATABASE_URL is not configured. "
+            "Alembic migrations require dedicated MIGRATION_DATABASE_URL with courtiq_migrator credentials."
+        )
+    config.set_main_option("sqlalchemy.url", settings.migration_database_url)
 
 target_metadata = None
 

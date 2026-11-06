@@ -6,9 +6,10 @@ from courtiq.domains.competitions.repository import CompetitionsRepository
 from courtiq.ingestion.runner import IngestionRunner
 
 
-def test_competitions_end_to_end_pipeline(test_db: DatabaseManager):
-    """Test full execution: Migrations -> Extraction -> Transformation -> SQL Storage -> Analytics."""
-    runner = IngestionRunner(test_db)
+def test_competitions_end_to_end_pipeline(postgres_test_db: DatabaseManager):
+    """Test full execution: Migrations -> Extraction -> Transformation -> SQL Storage -> Analytics on PostgreSQL."""
+    assert postgres_test_db.is_postgres is True, "Pipeline integration test must run against PostgreSQL"
+    runner = IngestionRunner(postgres_test_db)
     result = runner.ingest_competitions()
 
     assert result.status == "SUCCESS"
@@ -17,7 +18,7 @@ def test_competitions_end_to_end_pipeline(test_db: DatabaseManager):
     assert result.errors == 0
 
     # Verify repository access
-    repo = CompetitionsRepository(test_db)
+    repo = CompetitionsRepository(postgres_test_db)
     assert repo.get_competition_count() == result.competitions_ingested
     assert repo.get_category_count() == result.categories_ingested
 
