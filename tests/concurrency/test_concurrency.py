@@ -82,3 +82,4 @@ def test_concurrent_isolated_transactions(test_db: DatabaseManager):
     assert len(results) == num_threads
     for i in range(num_threads):
         assert f"Concurrent Category {i}" in results
+

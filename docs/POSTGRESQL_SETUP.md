@@ -235,3 +235,4 @@ Check the **Technical Architecture & System Telemetry** card on the homepage to 
 ### Issue: Port 5432 collision
 - **Cause:** Another local PostgreSQL instance is already bound to port 5432.
 - **Solution:** In `compose.yaml`, map to an alternative host port such as `5433:5432`, and update your `DATABASE_URL` port to `5433`.
+

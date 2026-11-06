@@ -85,3 +85,4 @@ def downgrade() -> None:
     op.drop_index("idx_competitions_category_id", table_name="competitions")
     op.drop_table("competitions")
     op.drop_table("categories")
+
