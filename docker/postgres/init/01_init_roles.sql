@@ -73,7 +73,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
 -- ==============================================================================
 \c courtiq_test
 
-GRANT ALL PRIVILEGES ON DATABASE courtiq_test TO courtiq_migrator;
+GRANT CONNECT ON DATABASE courtiq_test TO courtiq_migrator;
 GRANT CONNECT ON DATABASE courtiq_test TO courtiq_app;
 
 GRANT USAGE, CREATE ON SCHEMA public TO courtiq_migrator;

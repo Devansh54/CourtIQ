@@ -4,11 +4,19 @@ Tests both courtiq_migrator and courtiq_app roles, verifies primary keys,
 foreign keys, indexes, nullable parent relationships, and enforces DDL rejection.
 """
 
+import os
 import sys
 import psycopg
+from dotenv import load_dotenv
 
-conn_params_app = "host=127.0.0.1 port=5432 dbname=courtiq user=courtiq_app password=courtiq_app_password"
-conn_params_migrator = "host=127.0.0.1 port=5432 dbname=courtiq user=courtiq_migrator password=courtiq_migrator_password"
+load_dotenv(".env")
+
+conn_params_app = os.getenv("DATABASE_URL", "").replace("postgresql+psycopg://", "postgresql://")
+conn_params_migrator = os.getenv("MIGRATION_DATABASE_URL", "").replace("postgresql+psycopg://", "postgresql://")
+
+if not conn_params_app or not conn_params_migrator:
+    print("[ERROR] DATABASE_URL and MIGRATION_DATABASE_URL must be configured in .env")
+    sys.exit(1)
 
 
 def main() -> int:
