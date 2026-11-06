@@ -1,0 +1,32 @@
+# ==============================================================================
+# CourtIQ: Master Docker Compose Infrastructure
+# PostgreSQL 16+ Primary Relational Database with Localhost Isolation
+# ==============================================================================
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: courtiq_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: courtiq
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_master_password
+    ports:
+      # Bound strictly to localhost (127.0.0.1) to prevent external exposure
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # Persistent named volume ensures database state survives restarts
+      - postgres_data:/var/lib/postgresql/data
+      # Automated role provisioning and permission grant script
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d courtiq"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgres_data:
+    name: courtiq_postgres_data
