@@ -20,6 +20,12 @@ BEGIN
 END
 $do$;
 
+-- Read custom migration password from environment if provided
+\getenv migrator_pwd COURTIQ_MIGRATOR_PASSWORD
+\if :{?migrator_pwd}
+   ALTER ROLE courtiq_migrator WITH PASSWORD :'migrator_pwd';
+\endif
+
 -- 3. Create Application Runtime Role (DML Only: SELECT, INSERT, UPDATE, DELETE)
 DO
 $do$
@@ -29,6 +35,12 @@ BEGIN
    END IF;
 END
 $do$;
+
+-- Read custom application runtime password from environment if provided
+\getenv app_pwd COURTIQ_APP_PASSWORD
+\if :{?app_pwd}
+   ALTER ROLE courtiq_app WITH PASSWORD :'app_pwd';
+\endif
 
 -- 4. Grant Database Level Connection Rights
 GRANT CONNECT ON DATABASE courtiq TO courtiq_migrator;
@@ -54,4 +66,3 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
 
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
     GRANT USAGE, SELECT ON SEQUENCES TO courtiq_app;
-

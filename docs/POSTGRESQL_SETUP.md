@@ -47,7 +47,7 @@ This launches:
 - **Container Name:** `courtiq_postgres`
 - **Host Port Binding:** `127.0.0.1:5432:5432`
 - **Initialization Script:** `docker/postgres/init/01_init_roles.sql` executes automatically on first start, creating the `courtiq` database, roles, and grants.
-- **Volume:** `postgres_data` (persisted on disk).
+- **Volume:** `postgres_data` mounted to `/var/lib/postgresql` (enclosing PostgreSQL 18 PGDATA directory `/var/lib/postgresql/18/docker`).
 
 ### Step 2: Verify Container Health
 ```bash
@@ -117,13 +117,16 @@ Ensure your `.env` contains the PostgreSQL connection strings:
 
 ```dotenv
 # ==============================================================================
-# Database Configuration (PostgreSQL 16+)
+# Database Configuration (PostgreSQL 18)
 # ==============================================================================
+# Bootstrap Superuser Password (Required for Docker Compose container startup)
+POSTGRES_SUPERUSER_PASSWORD=your_secure_postgres_superuser_password_here
+
 # Runtime application connection (Least-privilege DML role)
-DATABASE_URL=postgresql+psycopg://courtiq_app:courtiq_app_password@localhost:5432/courtiq
+DATABASE_URL=postgresql+psycopg://courtiq_app:your_courtiq_app_password_here@localhost:5432/courtiq
 
 # Alembic migrations & schema evolution (DDL role)
-MIGRATION_DATABASE_URL=postgresql+psycopg://courtiq_migrator:courtiq_migrator_password@localhost:5432/courtiq
+MIGRATION_DATABASE_URL=postgresql+psycopg://courtiq_migrator:your_courtiq_migrator_password_here@localhost:5432/courtiq
 
 # Concurrency Connection Pooling Settings
 DB_POOL_SIZE=5
