@@ -19,8 +19,7 @@ def main():
                     print("courtiq_test already exists.")
                 cur.execute("GRANT ALL PRIVILEGES ON DATABASE courtiq_test TO courtiq_migrator;")
                 cur.execute("GRANT ALL PRIVILEGES ON DATABASE courtiq_test TO courtiq_app;")
-                cur.execute("ALTER ROLE courtiq_migrator CREATEDB;")
-                print("Granted privileges and CREATEDB to courtiq_migrator.")
+                print("Granted privileges on courtiq_test to courtiq_migrator and courtiq_app.")
 
         with psycopg.connect(f"host=127.0.0.1 port=5432 dbname=courtiq_test user=postgres password={su_pw}", autocommit=True) as conn:
             with conn.cursor() as cur:

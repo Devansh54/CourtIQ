@@ -28,10 +28,10 @@ SELECT 'CREATE DATABASE courtiq_test'
 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'courtiq_test')\gexec
 
 -- 3. Provision Migration Role (DDL & Schema Management: CREATE, ALTER, DROP)
-SELECT format('CREATE ROLE courtiq_migrator WITH LOGIN PASSWORD %L CREATEDB', :'migrator_pwd')
+SELECT format('CREATE ROLE courtiq_migrator WITH LOGIN PASSWORD %L', :'migrator_pwd')
 WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'courtiq_migrator')\gexec
 
-SELECT format('ALTER ROLE courtiq_migrator WITH PASSWORD %L CREATEDB', :'migrator_pwd')\gexec
+SELECT format('ALTER ROLE courtiq_migrator WITH PASSWORD %L', :'migrator_pwd')\gexec
 
 -- 4. Provision Application Runtime Role (DML Only: SELECT, INSERT, UPDATE, DELETE)
 SELECT format('CREATE ROLE courtiq_app WITH LOGIN PASSWORD %L', :'app_pwd')
