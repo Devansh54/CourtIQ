@@ -9,6 +9,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 from dotenv import load_dotenv
+from courtiq.core.exceptions import ConfigurationError
 
 # Ensure .env is loaded from project root if present
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
@@ -25,11 +26,16 @@ class Settings:
         # Operating Mode (LIVE: real API calls with strict auth | DEMO: synthetic fixtures)
         raw_mode = os.getenv("COURTIQ_MODE")
         if raw_mode:
-            self.courtiq_mode: str = raw_mode.upper()
+            normalized_mode = raw_mode.strip().upper()
+            if normalized_mode not in ("LIVE", "DEMO"):
+                raise ConfigurationError(
+                    f"Invalid COURTIQ_MODE: '{raw_mode}'. Expected 'LIVE' or 'DEMO'."
+                )
+            self.courtiq_mode: str = normalized_mode
         else:
             key = os.getenv("SPORTRADAR_API_KEY")
             is_placeholder = not key or key.strip().lower() in [
-                "your_sportradar_api_key_here", "placeholder", "changeme", "none", "test_key"
+                "your_sportradar_api_key_here", "placeholder", "changeme", "none", "test_key", "<your_sportradar_api_key>"
             ]
             self.courtiq_mode: str = "DEMO" if is_placeholder else "LIVE"
 
@@ -74,20 +80,28 @@ class Settings:
         self.log_level: str = os.getenv("LOG_LEVEL", "INFO").upper()
 
     @property
+    def has_valid_api_key(self) -> bool:
+        """Return True if SPORTRADAR_API_KEY is configured and not a placeholder."""
+        if not self.sportradar_api_key:
+            return False
+        placeholder_indicators = {
+            "your_sportradar_api_key_here",
+            "placeholder",
+            "changeme",
+            "none",
+            "test_key",
+            "<your_sportradar_api_key>",
+        }
+        return self.sportradar_api_key.strip().lower() not in placeholder_indicators
+
+    @property
     def is_demo_mode(self) -> bool:
         """Return True if running in DEMO mode."""
         if self.courtiq_mode == "DEMO":
             return True
         if self.courtiq_mode == "LIVE":
             return False
-        placeholder_indicators = [
-            "your_sportradar_api_key_here",
-            "placeholder",
-            "changeme",
-            "none",
-            "test_key",
-        ]
-        return not self.sportradar_api_key or self.sportradar_api_key.strip().lower() in placeholder_indicators
+        return not self.has_valid_api_key
 
     @property
     def is_mock_mode(self) -> bool:

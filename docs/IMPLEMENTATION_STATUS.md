@@ -36,9 +36,9 @@
 - [x] Master README (`README.md`).
 
 ### B. Scalable PostgreSQL Database Architecture & Infrastructure (New Milestone)
-- [x] Transitioned from single-threaded SQLite to **PostgreSQL 16+** backed by **SQLAlchemy 2.x Core** and **Psycopg 3** (`psycopg[binary]>=3.1.18`).
+- [x] Transitioned from single-threaded SQLite to **PostgreSQL 18** backed by **SQLAlchemy 2.x Core** and **Psycopg 3** (`psycopg[binary]>=3.1.18`).
 - [x] Implemented connection pooling via SQLAlchemy `QueuePool` (`size=5`, `max_overflow=10`, `timeout=30s`, `pool_recycle=1800s`, `pool_pre_ping=True`).
-- [x] Designed and deployed Docker Compose stack (`compose.yaml`) with `postgres:16-alpine`, persistent volume `postgres_data`, and healthchecks.
+- [x] Designed and deployed Docker Compose stack (`compose.yaml`) with `postgres:18-alpine`, persistent volume `postgres_data`, and healthchecks.
 - [x] Provisioned least-privilege security roles via `docker/postgres/init/01_init_roles.sql`:
   - `courtiq_migrator`: Dedicated DDL role for migrations.
   - `courtiq_app`: Restricted DML role (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) without destructive DDL permissions.
@@ -50,7 +50,7 @@
   - Idempotent upserts (`ON CONFLICT (...) DO UPDATE`).
   - Post-migration count verification.
 - [x] Authored complete PostgreSQL setup and operations guide (`docs/POSTGRESQL_SETUP.md`).
-- [x] Configured GitHub Actions CI workflow (`.github/workflows/ci.yml`) with PostgreSQL 16 service container.
+- [x] Configured GitHub Actions CI workflow (`.github/workflows/ci.yml`) with PostgreSQL 18 service container.
 
 ### C. Shared Core Infrastructure & Ingestion (14 Units)
 - [x] Centralized configuration manager (`src/courtiq/core/config.py`) with PostgreSQL URL, migration URL, pooling settings, and operating modes (`LIVE`/`DEMO`).
@@ -78,7 +78,7 @@
 - [x] Mandated SQL queries verification test verifying all 7 competition queries.
 - [x] End-to-end competitions pipeline integration test.
 - [x] Multi-user concurrency test suite (`tests/concurrency/test_concurrency.py`) simulating concurrent dashboard traffic and isolated transactions without pool exhaustion.
-- [x] **22 of 22 tests passing (100% pass rate).**
+- [x] **29 of 29 tests passing (100% pass rate).**
 
 ---
 

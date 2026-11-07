@@ -3,7 +3,7 @@
 **Product Name:** CourtIQ – Tennis Data & Analytics Explorer  
 **Document Status:** Approved PostgreSQL-First Architecture  
 **Lead Architect:** Devansh  
-**Target Engine:** PostgreSQL 16+ (Production & Evaluation) / SQLite (Isolated Testing Fallback)  
+**Target Engine:** PostgreSQL 18 (Production & Evaluation) / SQLite (Isolated Testing Fallback)  
 **Database Driver:** Psycopg 3 (`psycopg[binary]>=3.1.18`)  
 **ORM / Engine:** SQLAlchemy 2.x Core with `QueuePool`  
 **Migration Tool:** Alembic  

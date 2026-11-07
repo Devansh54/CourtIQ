@@ -87,31 +87,31 @@ gitGraph
    commit id: "Initial Architecture"
    branch devansh-foundation-competitions
    checkout devansh-foundation-competitions
-   commit id: "SQLite Foundation (50%)"
+   commit id: "Core Foundation (50%)"
    branch feature/postgresql-database-migration
    checkout feature/postgresql-database-migration
-   commit id: "PostgreSQL Migration & Alembic"
+   commit id: "PostgreSQL 18 & Alembic"
    checkout devansh-foundation-competitions
-   merge feature/postgresql-database-migration id: "Merge PostgreSQL Foundation"
-   checkout main
-   merge devansh-foundation-competitions id: "Merge Core Foundation (50%)"
+   merge feature/postgresql-database-migration id: "Merge PostgreSQL 18 Foundation"
    branch feature/venues-complexes
    checkout feature/venues-complexes
    commit id: "Mansi Venues Module (25%)"
-   checkout main
-   merge feature/venues-complexes id: "Merge Venues (75%)"
+   checkout devansh-foundation-competitions
+   merge feature/venues-complexes id: "Merge Venues PR (75%)"
    branch feature/competitor-rankings
    checkout feature/competitor-rankings
    commit id: "Nilakshi Rankings (25%)"
+   checkout devansh-foundation-competitions
+   merge feature/competitor-rankings id: "Merge Rankings PR (100%)"
    checkout main
-   merge feature/competitor-rankings id: "Final Release Verification (100%)"
+   merge devansh-foundation-competitions id: "Final Capstone Release (100%)"
 ```
 
 ### Branching Rules
-- **`main`**: Protected primary production branch. Contains stable, integrated milestones.
-- **`devansh-foundation-competitions`**: Devansh's foundation branch (Overall Architecture, Core Infra, Competitions Domain).
-- **`feature/venues-complexes`**: Mansi's development branch (Complexes, Venues & Related Analytics — 25%).
-- **`feature/competitor-rankings`**: Nilakshi's development branch (Doubles Competitor Rankings & Final Verification — 25%).
+- **`main`**: Protected primary production branch for final integrated capstone release.
+- **`devansh-foundation-competitions`**: Active integration branch and baseline for all contributor PRs.
+- **`feature/venues-complexes`**: Mansi's development branch (branched off and targeting PR into `devansh-foundation-competitions`).
+- **`feature/competitor-rankings`**: Nilakshi's development branch (branched off and targeting PR into `devansh-foundation-competitions`).
 
 ---
 

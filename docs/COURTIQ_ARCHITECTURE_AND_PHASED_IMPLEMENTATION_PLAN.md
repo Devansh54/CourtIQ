@@ -152,39 +152,36 @@ It is technically inaccurate to claim that standard ANSI SQL is universally port
 | **Foreign Key Enforce**| Disabled by default; requires `PRAGMA foreign_keys = ON;` per connection | Enforced by default on InnoDB engines | Enforced by default | SQLite requires explicit per-connection initialization. |
 | **Concurrency / Lock** | Database-level write lock; concurrent Streamlit writes cause `sqlite3.OperationalError: database is locked` | Row-level locking (MVCC); high concurrent read/write throughput | Row-level locking (MVCC); enterprise concurrency | SQLite degrades under simultaneous multi-user dashboard filtering if writes occur. |
 
-### 4.3 Architectural Database Recommendation
-To achieve enterprise engineering rigor while preserving frictionless evaluatability, CourtIQ adopts the following two-tier database strategy:
+### 4.3 Approved Architectural Database Strategy: PostgreSQL 18
+To achieve enterprise engineering rigor while strictly adhering to Page 10 of the project specification ("Database: MySQL/PostgreSQL"), Devansh has formally approved and merged the primary database architecture: **PostgreSQL 18** (deployed via Docker Compose `postgres:18-alpine` with SQLAlchemy 2.x Core, Psycopg 3, QueuePool connection pooling, and Alembic versioned migrations).
 
 ```mermaid
 flowchart TD
-    subgraph Primary_Target["1. Primary Development & Final Submission Database (Recommended)"]
-        MYSQL["MySQL 8.0+ (or PostgreSQL 16+)"]
+    subgraph Primary_Target["1. Primary Production & Evaluation Database (APPROVED & MERGED)"]
+        PG18["PostgreSQL 18 (postgres:18-alpine via Docker Compose)"]
         REASON1["100% Complies with PDF Page 10 ('Database: MySQL/PostgreSQL')"]
-        REASON2["Native AUTO_INCREMENT and row-level concurrency for Streamlit"]
+        REASON2["Enterprise MVCC row-level concurrency, connection pooling & role separation"]
+        REASON3["SQLAlchemy 2.x Core with Psycopg 3 & QueuePool"]
     end
 
     subgraph Testing_Target["2. Local Offline Testing Database (Lightweight Fallback)"]
-        SQLITE["SQLite 3 (data/courtiq.db)"]
-        REASON3["Zero-dependency test runs (Pytest tmp_path) and standalone review"]
-        REASON4["Embedded directly in Python standard library"]
+        SQLITE["SQLite 3 (data/courtiq.db / tmp_path)"]
+        REASON4["Zero-dependency test runs and fast offline unit testing"]
     end
 
-    Primary_Target -.->|Dialect Adapter Layer| DB_MGR["src/courtiq/core/database.py"]
-    Testing_Target -.->|Dialect Adapter Layer| DB_MGR
+    Primary_Target -->|Unified SQLAlchemy Core & Named Params| DB_MGR["src/courtiq/core/database.py"]
+    Testing_Target -->|Unified SQLAlchemy Core & Named Params| DB_MGR
 ```
 
-1. **Primary Submission Database (Recommended): MySQL 8.0+** (or PostgreSQL 16+).  
-   - Directly satisfies the PDF specification ("MySQL/PostgreSQL", `AUTO_INCREMENT`).
-   - Configured via `DATABASE_URL=mysql+pymysql://user:password@localhost:3306/courtiq` in `.env`.
-   - Migration files: `sql/migrations/mysql/` (or PostgreSQL equivalent).
-2. **Local Testing Database: SQLite 3 (`data/courtiq.db`).**  
-   - Retained exclusively for automated unit tests in `tests/conftest.py` using `tmp_path` fixtures, enabling fast, isolated test execution on machines without a running MySQL server.
-3. **Migration & Driver Strategy:**  
-   - In Phase 6, `DatabaseManager` will be enhanced with a lightweight dialect detector that translates parameter markers (`?` vs `%s`) and applies dialect-appropriate DDL scripts.
-
-> [!CAUTION]
-> **DECISION REQUIRING APPROVAL:**  
-> The final selection of the primary submission database (MySQL 8.0+ vs. PostgreSQL 16+ vs. retaining SQLite with an explicit deviation waiver) is **PENDING DEVANSH'S ARCHITECTURAL SIGN-OFF**.
+1. **Primary Database: PostgreSQL 18 (`postgres:18-alpine`).**  
+   - 100% satisfies the PDF specification ("MySQL/PostgreSQL").
+   - Configured via `DATABASE_URL` (application runtime DML role `courtiq_app`) and `MIGRATION_DATABASE_URL` (DDL migration role `courtiq_migrator`).
+   - Migrations managed version-by-version using Alembic (`alembic/versions/`).
+2. **Dialect Adapters Not Required:**  
+   - SQLAlchemy 2.x Core natively unifies parameter binding using named placeholders (`:param_name`), rendering manual SQL dialect adapters obsolete.
+3. **Local Testing Database: SQLite 3 / `courtiq_test`.**  
+   - Dedicated disposable PostgreSQL database `courtiq_test` used for automated integration/concurrency suites via `TEST_DATABASE_URL`.
+   - SQLite retained strictly as a fallback for offline environments.
 
 ---
 
@@ -470,7 +467,7 @@ flowchart TD
 |---|---|:---:|:---:|:---:|---|:---:|:---:|
 | `RSK-01` | **Sportradar API Expiry / Missing Key** | High | High | **P1** | Explicit `DEMO` mode serves verified synthetic fixtures from `tests/fixtures/` with prominent UI warning banner; `LIVE` mode fails fast on invalid credentials. | Devansh | Phase 2 |
 | `RSK-02` | **API Rate-Limiting Violations (429)** | High | Med | **P2** | `SportradarClient` enforces minimum 1.0s interval pacing and applies exponential backoff retries. | Devansh | Phase 2 |
-| `RSK-03` | **Database Syntax Dialect Incompatibilities** | Med | High | **P1** | Re-evaluated database strategy: recommend MySQL 8.0+ for submission, maintain SQLite for fast Pytest runs, implement dialect adapter in `DatabaseManager`. | Devansh / Mansi | Phase 6 |
+| `RSK-03` | **Database Syntax Dialect Incompatibilities** | Low | High | **P1** | RESOLVED: Adopted PostgreSQL 18 via SQLAlchemy 2.x Core (named parameter binding) and Alembic migrations. Dialect adapters no longer required. | Devansh | Complete |
 | `RSK-04` | **Weekly Ranking Snapshot Collisions** | Med | High | **P2** | Phase 8B architectural decision: verify API availability before deciding between 6-column baseline vs. extended snapshot schema. | Nilakshi | Phase 8B |
 | `RSK-05` | **Silent Synthetic Data Contamination** | Med | High | **P1** | Removed automatic mock fallback. Mode must be explicitly set via `COURTIQ_MODE=LIVE` or `COURTIQ_MODE=DEMO`. | Devansh | Phase 2 |
 | `RSK-06` | **Streamlit Threading / SQLite Lock** | Low | Med | **P3** | SQLite configured with `check_same_thread=False` and short transaction scopes; read queries wrapped in Streamlit caching. | Devansh | Phase 2 |
@@ -485,8 +482,8 @@ flowchart TD
 The following three architectural decisions remain clearly marked as **REQUIRING DEVANSH'S APPROVAL**:
 
 1. **Primary Submission Database Selection:**  
-   - *Recommendation:* Adopt **MySQL 8.0+** as the primary project database to achieve 100% compliance with Page 10 of the PDF guide and native `AUTO_INCREMENT` support, while retaining SQLite for fast, zero-dependency Pytest suite execution.  
-   - *Status:* **PENDING DEVANSH'S APPROVAL.**
+   - *Decision:* Approved and merged **PostgreSQL 18** (`postgres:18-alpine` via Docker Compose, SQLAlchemy 2.x Core, Psycopg 3, QueuePool, Alembic migrations).  
+   - *Status:* **APPROVED & MERGED INTO devansh-foundation-competitions.**
 2. **Rankings Historical Snapshot Extension Adoption:**  
    - *Recommendation:* Preserve the PDF baseline 6-column schema initially. Evaluate live API payload in Phase 8B; adopt the extended `(snapshot_date, snapshot_year, snapshot_week)` schema only if verified from the live endpoint and approved.  
    - *Status:* **PENDING DEVANSH'S APPROVAL (Phase 8B Gate).**

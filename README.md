@@ -54,7 +54,7 @@ Domain-Specific Extraction (Pydantic models)
 Transformation & Validation (Relational normalization)
         │
         ▼
-PostgreSQL 16+ Relational Database (SQLAlchemy 2.x Core & QueuePool)
+PostgreSQL 18 Relational Database (SQLAlchemy 2.x Core & QueuePool)
         │
         ▼
 Repositories & Parameterized Analytical SQL Queries
@@ -71,7 +71,7 @@ Interactive Streamlit Dashboard & Plotly Visualizations
 |---|---|---|
 | Language | Python 3.10+ (Tested on 3.12) | Core programming language |
 | Data provider | Sportradar Tennis API v3 | Official Tennis API data |
-| Relational database | PostgreSQL 16+ | Primary database (Docker Compose or native) |
+| Relational database | PostgreSQL 18 | Primary database (Docker Compose or native) |
 | Fallback database | SQLite | Offline environments & isolated unit test suites |
 | ORM / SQL engine | SQLAlchemy 2.x Core | Connection pooling (`QueuePool`), transactional contexts |
 | Database driver | Psycopg 3 (`psycopg[binary]>=3.1.18`) | High-performance PostgreSQL connector |
@@ -90,7 +90,7 @@ Interactive Streamlit Dashboard & Plotly Visualizations
 ### Prerequisites
 - Python 3.10 or later
 - Git
-- Docker & Docker Compose (recommended for PostgreSQL), or a local PostgreSQL 16+ installation
+- Docker & Docker Compose (recommended for PostgreSQL), or a local PostgreSQL 18 installation
 - A Sportradar Tennis API key (optional; system includes DEMO mode with bundled fixtures)
 
 ### 1. Clone the repository
@@ -123,7 +123,7 @@ pip install -r requirements.txt
 
 ### 4. Start PostgreSQL with Docker Compose
 
-Launch the PostgreSQL 16 database container with persistent storage and pre-configured roles:
+Launch the PostgreSQL 18 database container with persistent storage and pre-configured roles:
 
 ```bash
 docker compose up -d

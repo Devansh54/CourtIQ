@@ -1,6 +1,6 @@
 """CourtIQ: Complexes & Venues Explorer.
 
-Domain Contributor: Venue & Complexes Module Owner (25% Contribution)
+Domain Contributor: Mansi (Venue & Complexes Module Owner — 25% Workload Allocation)
 Reference: docs/handoffs/VENUES_MODULE_HANDOFF.md
 """
 
@@ -18,23 +18,24 @@ st.set_page_config(page_title="Venues Explorer | CourtIQ", page_icon="🏟️", 
 apply_custom_css()
 
 st.title("🏟️ Tennis Complexes & Venues Explorer")
-st.caption("Module Owner: Venue & Complexes Module Owner (25% Workload Allocation)")
+st.caption("Module Owner: Mansi (Venue & Complexes Module Owner — 25% Workload Allocation)")
 
 st.info("""
-### 📋 Module Status: Ready for Venue & Complexes Module Owner
-This domain is architecturally designed and isolated for implementation by the **Venue & Complexes Module Owner**.
-The core infrastructure, API client, and database connection layers have been established by Devansh.
+### 📋 Module Status: Ready for Venue & Complexes Module Owner (Mansi)
+This domain is architecturally designed and isolated for implementation by **Mansi** (Venue & Complexes Module Owner).
+The PostgreSQL 18 relational foundation, connection pooling (`QueuePool`), Alembic migration framework, dual-mode Sportradar API client, and shared repository interfaces have been established and verified by Devansh.
 """)
 
-render_section_header("Module Responsibilities & Requirements", "Extracted from Project Guide (PDF Pages 4-5)")
+render_section_header("Module Responsibilities & Requirements", "Extracted from Project Guide (PDF Pages 4-5) & PostgreSQL 18 Design")
 
 col1, col2 = st.columns(2)
 
 with col1:
     st.markdown("""
-    #### Database Schemas
-    - **`complexes` Table:** `complex_id` (PK), `complex_name` (NOT NULL).
-    - **`venues` Table:** `venue_id` (PK), `venue_name`, `city_name`, `country_name`, `country_code` (CHAR(3)), `timezone`, `complex_id` (FK).
+    #### Database Schemas (PostgreSQL 18)
+    - **`complexes` Table:** `complex_id` VARCHAR(50) PK, `complex_name` VARCHAR(100) NOT NULL.
+    - **`venues` Table:** `venue_id` VARCHAR(50) PK, `venue_name` VARCHAR(100) NOT NULL, `city_name` VARCHAR(100) NOT NULL, `country_name` VARCHAR(100) NOT NULL, `country_code` CHAR(3) NOT NULL, `timezone` VARCHAR(100) NOT NULL, `complex_id` VARCHAR(50) FK REFERENCES complexes(complex_id) ON DELETE CASCADE.
+    - **PostgreSQL Indexes:** `idx_venues_complex_id`, `idx_venues_country_code`, `idx_venues_city_name`.
     
     #### Required Analytical SQL Queries
     1. List all venues along with their associated complex name.
@@ -48,16 +49,17 @@ with col1:
 
 with col2:
     st.markdown("""
-    #### Deliverables Checklist for Module Owner
-    - [ ] `sql/migrations/002_venues.sql`
-    - [ ] `src/courtiq/domains/venues/extractor.py`
-    - [ ] `src/courtiq/domains/venues/transformer.py`
-    - [ ] `src/courtiq/domains/venues/repository.py`
-    - [ ] `src/courtiq/domains/venues/analytics.py`
-    - [ ] `sql/queries/venues/` (7 SQL query files)
-    - [ ] Interactive UI on this page (`pages/2_Venues.py`)
-    - [ ] Unit & Integration Tests in `tests/unit/venues/`
-    - [ ] Subsequent Handoff Prompt: `docs/handoffs/RANKINGS_MODULE_HANDOFF.md`
+    #### Deliverables Checklist for Module Owner (Mansi)
+    - [ ] `alembic/versions/0002_venues.py` (Alembic DDL migration chained to `0001_initial_competitions`)
+    - [ ] `src/courtiq/domains/venues/schemas.py` (Pydantic validation models)
+    - [ ] `src/courtiq/domains/venues/extractor.py` (Sportradar complexes extraction)
+    - [ ] `src/courtiq/domains/venues/transformer.py` (Payload normalizer)
+    - [ ] `src/courtiq/domains/venues/repository.py` (PostgreSQL upserts with `ON CONFLICT` & query runner)
+    - [ ] `src/courtiq/domains/venues/analytics.py` (Plotly charts & KPI summaries)
+    - [ ] `sql/queries/venues/` (7 PostgreSQL query files using named parameters)
+    - [ ] Full interactive Streamlit explorer UI on this page (`pages/2_Venues.py`)
+    - [ ] Unit & Integration Tests in `tests/unit/venues/` and `tests/integration/`
+    - [ ] Subsequent Handoff Directive: `docs/handoffs/RANKINGS_MODULE_HANDOFF.md`
     """)
 
 st.markdown("---")
