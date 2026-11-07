@@ -6,7 +6,7 @@
 
 CourtIQ is a Python-based tennis data exploration and analytics application built around the [Sportradar Tennis API](https://developer.sportradar.com/tennis/reference/tennis-overview). It brings together structured information about tennis competitions, sports complexes and venues, and doubles competitor rankings, with the aim of making that data easier to explore and analyse.
 
-The project combines API-based data collection, data validation and transformation, relational storage with **PostgreSQL 16+**, SQL analytics, and an interactive [Streamlit](https://streamlit.io/) interface.
+The project combines API-based data collection, data validation and transformation, relational storage with **PostgreSQL 18**, SQL analytics, and an interactive [Streamlit](https://streamlit.io/) interface.
 
 ---
 
@@ -54,7 +54,7 @@ Domain-Specific Extraction (Pydantic models)
 Transformation & Validation (Relational normalization)
         │
         ▼
-PostgreSQL 16+ Relational Database (SQLAlchemy 2.x Core & QueuePool)
+PostgreSQL 18 Relational Database (SQLAlchemy 2.x Core & QueuePool)
         │
         ▼
 Repositories & Parameterized Analytical SQL Queries
@@ -71,7 +71,7 @@ Interactive Streamlit Dashboard & Plotly Visualizations
 |---|---|---|
 | Language | Python 3.10+ (Tested on 3.12) | Core programming language |
 | Data provider | Sportradar Tennis API v3 | Official Tennis API data |
-| Relational database | PostgreSQL 16+ | Primary database (Docker Compose or native) |
+| Relational database | PostgreSQL 18 | Primary database (Docker Compose or native) |
 | Fallback database | SQLite | Offline environments & isolated unit test suites |
 | ORM / SQL engine | SQLAlchemy 2.x Core | Connection pooling (`QueuePool`), transactional contexts |
 | Database driver | Psycopg 3 (`psycopg[binary]>=3.1.18`) | High-performance PostgreSQL connector |
@@ -90,7 +90,7 @@ Interactive Streamlit Dashboard & Plotly Visualizations
 ### Prerequisites
 - Python 3.10 or later
 - Git
-- Docker & Docker Compose (recommended for PostgreSQL), or a local PostgreSQL 16+ installation
+- Docker & Docker Compose (recommended for PostgreSQL), or a local PostgreSQL 18 installation
 - A Sportradar Tennis API key (optional; system includes DEMO mode with bundled fixtures)
 
 ### 1. Clone the repository
@@ -121,22 +121,7 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 4. Start PostgreSQL with Docker Compose
-
-Launch the PostgreSQL 16 database container with persistent storage and pre-configured roles:
-
-```bash
-docker compose up -d
-```
-
-Verify that the container is healthy:
-```bash
-docker compose ps
-```
-
-*(For manual PostgreSQL installation or troubleshooting, see the [PostgreSQL Setup Guide](docs/POSTGRESQL_SETUP.md)).*
-
-### 5. Configure environment variables
+### 4. Configure environment variables
 
 Create your local `.env` configuration file from the template:
 
@@ -150,12 +135,30 @@ Copy-Item .env.example .env
 cp .env.example .env
 ```
 
-If you have a live Sportradar API key, set `COURTIQ_MODE=LIVE` and supply your key:
-```dotenv
-COURTIQ_MODE=LIVE
-SPORTRADAR_API_KEY=your_actual_key_here
+Open `.env` and configure your settings:
+- **Mandatory PostgreSQL Passwords:** Replace the placeholder values for `POSTGRES_SUPERUSER_PASSWORD`, `COURTIQ_MIGRATOR_PASSWORD`, and `COURTIQ_APP_PASSWORD` with your own secure local credentials. Ensure the password values embedded in the connection strings match their respective role passwords:
+  - `DATABASE_URL=postgresql+psycopg://courtiq_app:<COURTIQ_APP_PASSWORD>@127.0.0.1:5432/courtiq`
+  - `MIGRATION_DATABASE_URL=postgresql+psycopg://courtiq_migrator:<COURTIQ_MIGRATOR_PASSWORD>@127.0.0.1:5432/courtiq`
+  - `TEST_DATABASE_URL=postgresql+psycopg://courtiq_migrator:<COURTIQ_MIGRATOR_PASSWORD>@127.0.0.1:5432/courtiq_test`
+- **Operating Mode:**
+  - To run in **DEMO mode** (default), leave `COURTIQ_MODE=DEMO`. CourtIQ will load verified synthetic fixtures from `tests/fixtures/` without making external API requests or requiring a Sportradar API key.
+  - To run in **LIVE mode**, set `COURTIQ_MODE=LIVE` and supply your valid `SPORTRADAR_API_KEY`.
+- *Never commit your `.env` file to version control.*
+
+### 5. Start PostgreSQL with Docker Compose
+
+Only after `.env` has been configured with the required password variables, launch the PostgreSQL 18 container with persistent storage and pre-configured least-privilege roles:
+
+```bash
+docker compose up -d
 ```
-To run offline without API keys, leave `COURTIQ_MODE=DEMO`.
+
+Verify that the container is healthy:
+```bash
+docker compose ps
+```
+
+*(For manual PostgreSQL installation or troubleshooting, see the [PostgreSQL Setup Guide](docs/POSTGRESQL_SETUP.md)).*
 
 ### 6. Run database migrations
 
@@ -205,7 +208,7 @@ python -m pytest tests -v
 
 ## Database architecture & security
 
-CourtIQ uses **PostgreSQL 16+** as its primary relational engine, configured with strict least-privilege security roles:
+CourtIQ uses **PostgreSQL 18** as its primary relational engine, configured with strict least-privilege security roles:
 
 - `courtiq_migrator`: Dedicated DDL role used by Alembic migrations to create and alter schema tables.
 - `courtiq_app`: Restricted DML role used at application runtime for `SELECT`, `INSERT`, `UPDATE`, `DELETE` queries. This role cannot perform destructive DDL actions like `DROP` or `ALTER TABLE`.
@@ -230,7 +233,7 @@ CourtIQ/
 │   ├── 1_Competitions.py          # Competitions explorer (Devansh)
 │   ├── 2_Venues.py                # Venues explorer (Mansi)
 │   └── 3_Rankings.py              # Rankings explorer (Nilakshi)
-├── compose.yaml                   # Docker Compose specification for PostgreSQL 16
+├── compose.yaml                   # Docker Compose specification for PostgreSQL 18
 ├── alembic.ini                    # Alembic migration configuration
 ├── alembic/                       # Alembic version migration scripts
 │   ├── env.py                     # Dynamic database URL resolution & migration runner

@@ -84,7 +84,7 @@ The project guide mandates data collection from three specific Sportradar endpoi
 | **INFRA** | `REQ-INFRA-06` | Page 8, 11 | Master Streamlit shell, custom CSS, mode badges & navigation | `app.py`, `src/courtiq/utils/formatting.py` | Devansh |
 | **COMP** | `REQ-COMP-01` | Page 2 | Fetch competitions from `/competitions.json` | `src/courtiq/domains/competitions/extractor.py` | Devansh |
 | **COMP** | `REQ-COMP-02` | Page 2 | Normalize nested JSON into `categories` and `competitions` | `src/courtiq/domains/competitions/transformer.py` | Devansh |
-| **COMP** | `REQ-COMP-03` | Page 2-3 | Table DDL for `categories` & `competitions` with FKs & indexes | `sql/migrations/001_competitions.sql` | Devansh |
+| **COMP** | `REQ-COMP-03` | Page 2-3 | Table DDL for `categories` & `competitions` with FKs & indexes | `alembic/versions/0001_initial_competitions.py` | Devansh |
 | **COMP** | `REQ-COMP-04` | Page 3 | SQL Q1: List all competitions along with category name | `sql/queries/competitions/q1_list_with_category.sql` | Devansh |
 | **COMP** | `REQ-COMP-05` | Page 3 | SQL Q2: Count the number of competitions in each category | `sql/queries/competitions/q2_count_by_category.sql` | Devansh |
 | **COMP** | `REQ-COMP-06` | Page 4 | SQL Q3: Find all competitions of type 'doubles' | `sql/queries/competitions/q3_doubles_competitions.sql` | Devansh |
@@ -95,7 +95,7 @@ The project guide mandates data collection from three specific Sportradar endpoi
 | **COMP** | `REQ-COMP-11` | Page 8-10 | Interactive Streamlit Competitions Explorer & hierarchy tree | `pages/1_Competitions.py` | Devansh |
 | **VEN** | `REQ-VEN-01` | Page 4 | Fetch complexes payload from `/complexes.json` | `src/courtiq/domains/venues/extractor.py` | Mansi |
 | **VEN** | `REQ-VEN-02` | Page 4-5 | Normalize nested JSON into `complexes` and `venues` | `src/courtiq/domains/venues/transformer.py` | Mansi |
-| **VEN** | `REQ-VEN-03` | Page 4-5 | Table DDL for `complexes` and `venues` with FKs & indexes | `sql/migrations/002_venues.sql` | Mansi |
+| **VEN** | `REQ-VEN-03` | Page 4-5 | Table DDL for `complexes` and `venues` with FKs & indexes | `alembic/versions/0002_venues.py` | Mansi |
 | **VEN** | `REQ-VEN-04` | Page 5 | SQL Q8: List venues along with associated complex name | `sql/queries/venues/q1_venues_with_complex.sql` | Mansi |
 | **VEN** | `REQ-VEN-05` | Page 5 | SQL Q9: Count the number of venues in each complex | `sql/queries/venues/q2_venues_count_per_complex.sql` | Mansi |
 | **VEN** | `REQ-VEN-06` | Page 5 | SQL Q10: Details of venues in a specific country (Chile) | `sql/queries/venues/q3_venues_by_country.sql` | Mansi |
@@ -106,7 +106,7 @@ The project guide mandates data collection from three specific Sportradar endpoi
 | **VEN** | `REQ-VEN-11` | Page 8-10 | Interactive Streamlit Venues Explorer & geographic charts | `pages/2_Venues.py` | Mansi |
 | **RNK** | `REQ-RNK-01` | Page 6 | Fetch rankings from `/double_competitor_rankings.json` | `src/courtiq/domains/rankings/extractor.py` | Nilakshi |
 | **RNK** | `REQ-RNK-02` | Page 6-7 | Normalize JSON into `competitors` and `competitor_rankings` | `src/courtiq/domains/rankings/transformer.py` | Nilakshi |
-| **RNK** | `REQ-RNK-03` | Page 6-7 | Table DDL for `competitors` and `competitor_rankings` | `sql/migrations/003_rankings.sql` | Nilakshi |
+| **RNK** | `REQ-RNK-03` | Page 6-7 | Table DDL for `competitors` and `competitor_rankings` | `alembic/versions/0003_rankings.py` | Nilakshi |
 | **RNK** | `REQ-RNK-04` | Page 7 | SQL Q15: Get all competitors with their rank and points | `sql/queries/rankings/q1_competitors_rank_points.sql` | Nilakshi |
 | **RNK** | `REQ-RNK-05` | Page 7 | SQL Q16: Find competitors ranked in the top 5 | `sql/queries/rankings/q2_top_5_competitors.sql` | Nilakshi |
 | **RNK** | `REQ-RNK-06` | Page 8 | SQL Q17: List competitors with no rank movement (stable) | `sql/queries/rankings/q3_stable_rank_competitors.sql` | Nilakshi |
@@ -126,7 +126,7 @@ In the previous activity cycle, an audit was conducted on the working tree follo
 1. **Commit `ce61e62` Integrity:** Commit `ce61e62549f7a6a26e4845fc4de868369e8cbae9` ("feat(core): initialize CourtIQ foundation and complete competitions module") contains all 72 initial files (5,265 lines of code and documentation). This commit is pushed to and verified on GitHub remote `origin/devansh-foundation-competitions` and `origin/main`.
 2. **Analysis of `git restore .`:** The command `git restore .` was executed when 68 files appeared as "modified" in `git status`. Forensic inspection of `git diff` revealed that these modifications were strictly Windows CRLF vs. Linux LF line-ending translations (`warning: in the working copy of ..., LF will be replaced by CRLF the next time Git touches it`). Restoring the tree did **NOT** discard any code or documentation changes; it simply normalized the local filesystem working copy to the exact bytes recorded in Git commit `ce61e62`.
 3. **Untracked File Resolution:** The previous summary report stated "working tree clean" based on an intermediate check before creating `docs/COURTIQ_ARCHITECTURE_AND_PHASED_IMPLEMENTATION_PLAN.md`. Once written, that markdown file became an untracked file. In accordance with the user's strict planning-only directive, this planning document remains intentionally untracked on disk without staging, committing, or pushing.
-4. **Current Test Suite Validation:** Running `pytest tests -v` confirms that **18 of 18 tests pass in 1.59s**. The codebase is intact, stable, and completely uncorrupted.
+4. **Current Test Suite Validation:** Running `pytest tests -v` confirms that **31 of 31 tests pass in 2.40s**. The codebase is intact, stable, and completely uncorrupted.
 
 ---
 
@@ -144,7 +144,7 @@ The initial implementation in `src/courtiq/core/database.py` implemented a zero-
 ### 4.2 Comprehensive Database Compatibility & Limitation Analysis
 It is technically inaccurate to claim that standard ANSI SQL is universally portable across SQLite, MySQL, and PostgreSQL. Crucial dialect incompatibilities exist across the four major relational operations:
 
-| Dialect Feature | SQLite 3 (Current Local) | MySQL 8.0+ (PDF Mandated) | PostgreSQL 16+ (PDF Mandated) | Impact on CourtIQ |
+| Dialect Feature | SQLite 3 (Current Local) | MySQL 8.0+ (PDF Mandated) | PostgreSQL 18 (PDF Mandated) | Impact on CourtIQ |
 |---|---|---|---|---|
 | **Auto-Increment PK** | `INTEGER PRIMARY KEY AUTOINCREMENT` | `INT PRIMARY KEY AUTO_INCREMENT` | `SERIAL PRIMARY KEY` or `INT GENERATED ALWAYS AS IDENTITY` | Migration script DDL for `competitor_rankings` must be dialect-specific. |
 | **Upsert Syntax** | `INSERT OR REPLACE INTO ...` or `ON CONFLICT (...) DO UPDATE` | `INSERT INTO ... ON DUPLICATE KEY UPDATE col=VALUES(col)` | `INSERT INTO ... ON CONFLICT (id) DO UPDATE SET col = EXCLUDED.col` | Repository `save_*` methods cannot use identical upsert statements across engines. |
@@ -152,39 +152,36 @@ It is technically inaccurate to claim that standard ANSI SQL is universally port
 | **Foreign Key Enforce**| Disabled by default; requires `PRAGMA foreign_keys = ON;` per connection | Enforced by default on InnoDB engines | Enforced by default | SQLite requires explicit per-connection initialization. |
 | **Concurrency / Lock** | Database-level write lock; concurrent Streamlit writes cause `sqlite3.OperationalError: database is locked` | Row-level locking (MVCC); high concurrent read/write throughput | Row-level locking (MVCC); enterprise concurrency | SQLite degrades under simultaneous multi-user dashboard filtering if writes occur. |
 
-### 4.3 Architectural Database Recommendation
-To achieve enterprise engineering rigor while preserving frictionless evaluatability, CourtIQ adopts the following two-tier database strategy:
+### 4.3 Approved Architectural Database Strategy: PostgreSQL 18
+To achieve enterprise engineering rigor while strictly adhering to Page 10 of the project specification ("Database: MySQL/PostgreSQL"), Devansh has formally approved and merged the primary database architecture: **PostgreSQL 18** (deployed via Docker Compose `postgres:18-alpine` with SQLAlchemy 2.x Core, Psycopg 3, QueuePool connection pooling, and Alembic versioned migrations).
 
 ```mermaid
 flowchart TD
-    subgraph Primary_Target["1. Primary Development & Final Submission Database (Recommended)"]
-        MYSQL["MySQL 8.0+ (or PostgreSQL 16+)"]
+    subgraph Primary_Target["1. Primary Production & Evaluation Database (APPROVED & MERGED)"]
+        PG18["PostgreSQL 18 (postgres:18-alpine via Docker Compose)"]
         REASON1["100% Complies with PDF Page 10 ('Database: MySQL/PostgreSQL')"]
-        REASON2["Native AUTO_INCREMENT and row-level concurrency for Streamlit"]
+        REASON2["Enterprise MVCC row-level concurrency, connection pooling & role separation"]
+        REASON3["SQLAlchemy 2.x Core with Psycopg 3 & QueuePool"]
     end
 
     subgraph Testing_Target["2. Local Offline Testing Database (Lightweight Fallback)"]
-        SQLITE["SQLite 3 (data/courtiq.db)"]
-        REASON3["Zero-dependency test runs (Pytest tmp_path) and standalone review"]
-        REASON4["Embedded directly in Python standard library"]
+        SQLITE["SQLite 3 (data/courtiq.db / tmp_path)"]
+        REASON4["Zero-dependency test runs and fast offline unit testing"]
     end
 
-    Primary_Target -.->|Dialect Adapter Layer| DB_MGR["src/courtiq/core/database.py"]
-    Testing_Target -.->|Dialect Adapter Layer| DB_MGR
+    Primary_Target -->|Unified SQLAlchemy Core & Named Params| DB_MGR["src/courtiq/core/database.py"]
+    Testing_Target -->|Unified SQLAlchemy Core & Named Params| DB_MGR
 ```
 
-1. **Primary Submission Database (Recommended): MySQL 8.0+** (or PostgreSQL 16+).  
-   - Directly satisfies the PDF specification ("MySQL/PostgreSQL", `AUTO_INCREMENT`).
-   - Configured via `DATABASE_URL=mysql+pymysql://user:password@localhost:3306/courtiq` in `.env`.
-   - Migration files: `sql/migrations/mysql/` (or PostgreSQL equivalent).
-2. **Local Testing Database: SQLite 3 (`data/courtiq.db`).**  
-   - Retained exclusively for automated unit tests in `tests/conftest.py` using `tmp_path` fixtures, enabling fast, isolated test execution on machines without a running MySQL server.
-3. **Migration & Driver Strategy:**  
-   - In Phase 6, `DatabaseManager` will be enhanced with a lightweight dialect detector that translates parameter markers (`?` vs `%s`) and applies dialect-appropriate DDL scripts.
-
-> [!CAUTION]
-> **DECISION REQUIRING APPROVAL:**  
-> The final selection of the primary submission database (MySQL 8.0+ vs. PostgreSQL 16+ vs. retaining SQLite with an explicit deviation waiver) is **PENDING DEVANSH'S ARCHITECTURAL SIGN-OFF**.
+1. **Primary Database: PostgreSQL 18 (`postgres:18-alpine`).**  
+   - 100% satisfies the PDF specification ("MySQL/PostgreSQL").
+   - Configured via `DATABASE_URL` (application runtime DML role `courtiq_app`) and `MIGRATION_DATABASE_URL` (DDL migration role `courtiq_migrator`).
+   - Migrations managed version-by-version using Alembic (`alembic/versions/`).
+2. **Dialect Adapters Not Required:**  
+   - SQLAlchemy 2.x Core natively unifies parameter binding using named placeholders (`:param_name`), rendering manual SQL dialect adapters obsolete.
+3. **Local Testing Database: SQLite 3 / `courtiq_test`.**  
+   - Dedicated disposable PostgreSQL database `courtiq_test` used for automated integration/concurrency suites via `TEST_DATABASE_URL`.
+   - SQLite retained strictly as a fallback for offline environments.
 
 ---
 
@@ -314,7 +311,7 @@ classDiagram
 
 #### Option A: Baseline 6-Column Guide Schema (Strict Compliance)
 - **Columns:** `rank_id`, `rank`, `movement`, `points`, `competitions_played`, `competitor_id`.
-- **Semantics:** Represents the *current* ranking standings. Repetitive ingestion replaces or updates existing records (`INSERT OR REPLACE` / `ON DUPLICATE KEY UPDATE` keyed on `competitor_id`).
+- **Semantics:** Represents the *current* ranking standings. Repetitive ingestion replaces or updates existing records using PostgreSQL idempotent upsert syntax: `ON CONFLICT (competitor_id) DO UPDATE` keyed on `competitor_id`.
 - **Pros:** 100% compliant with the evaluation rubric; zero discrepancy with PDF Pages 6–7.
 - **Cons:** Historical week-over-week trends cannot be queried across time.
 
@@ -437,14 +434,14 @@ flowchart TD
         P2 --> P3["Phase 3: Competitions ETL Pipeline (10u)"]
         P3 --> P4["Phase 4: Competitions SQL & UI (10u)"]
         P4 --> P5["Phase 5: Core Testing & Handoff 1 (10u)"]
-        G1{"Gate 1: 18/18 Tests Pass, Remote Synced"}
+        G1{"Gate 1: 31/31 Tests Pass, Remote Synced"}
         P5 --> G1
     end
 
     subgraph Milestone2["Milestone 2: Complexes & Venues (Mansi — 25 Units)"]
         H1["docs/handoffs/VENUES_MODULE_HANDOFF.md"]
         G1 --> H1
-        H1 --> P6["Phase 6: Venues ETL & 002 Migration (10u)"]
+        H1 --> P6["Phase 6: Venues ETL & Alembic 0002_venues Migration (10u)"]
         P6 --> P7["Phase 7: Venues SQL & UI (10u)"]
         P7 --> P8A["Phase 8A: Venues Verification & Handoff 2 (5u)"]
         G2{"Gate 2: Venues Tests Pass, PR Merged"}
@@ -470,7 +467,7 @@ flowchart TD
 |---|---|:---:|:---:|:---:|---|:---:|:---:|
 | `RSK-01` | **Sportradar API Expiry / Missing Key** | High | High | **P1** | Explicit `DEMO` mode serves verified synthetic fixtures from `tests/fixtures/` with prominent UI warning banner; `LIVE` mode fails fast on invalid credentials. | Devansh | Phase 2 |
 | `RSK-02` | **API Rate-Limiting Violations (429)** | High | Med | **P2** | `SportradarClient` enforces minimum 1.0s interval pacing and applies exponential backoff retries. | Devansh | Phase 2 |
-| `RSK-03` | **Database Syntax Dialect Incompatibilities** | Med | High | **P1** | Re-evaluated database strategy: recommend MySQL 8.0+ for submission, maintain SQLite for fast Pytest runs, implement dialect adapter in `DatabaseManager`. | Devansh / Mansi | Phase 6 |
+| `RSK-03` | **Database Syntax Dialect Incompatibilities** | Low | High | **P1** | RESOLVED: Adopted PostgreSQL 18 via SQLAlchemy 2.x Core (named parameter binding) and Alembic migrations. Dialect adapters no longer required. | Devansh | Complete |
 | `RSK-04` | **Weekly Ranking Snapshot Collisions** | Med | High | **P2** | Phase 8B architectural decision: verify API availability before deciding between 6-column baseline vs. extended snapshot schema. | Nilakshi | Phase 8B |
 | `RSK-05` | **Silent Synthetic Data Contamination** | Med | High | **P1** | Removed automatic mock fallback. Mode must be explicitly set via `COURTIQ_MODE=LIVE` or `COURTIQ_MODE=DEMO`. | Devansh | Phase 2 |
 | `RSK-06` | **Streamlit Threading / SQLite Lock** | Low | Med | **P3** | SQLite configured with `check_same_thread=False` and short transaction scopes; read queries wrapped in Streamlit caching. | Devansh | Phase 2 |
@@ -485,8 +482,8 @@ flowchart TD
 The following three architectural decisions remain clearly marked as **REQUIRING DEVANSH'S APPROVAL**:
 
 1. **Primary Submission Database Selection:**  
-   - *Recommendation:* Adopt **MySQL 8.0+** as the primary project database to achieve 100% compliance with Page 10 of the PDF guide and native `AUTO_INCREMENT` support, while retaining SQLite for fast, zero-dependency Pytest suite execution.  
-   - *Status:* **PENDING DEVANSH'S APPROVAL.**
+   - *Decision:* Approved and merged **PostgreSQL 18** (`postgres:18-alpine` via Docker Compose, SQLAlchemy 2.x Core, Psycopg 3, QueuePool, Alembic migrations).  
+   - *Status:* **APPROVED & MERGED INTO devansh-foundation-competitions.**
 2. **Rankings Historical Snapshot Extension Adoption:**  
    - *Recommendation:* Preserve the PDF baseline 6-column schema initially. Evaluate live API payload in Phase 8B; adopt the extended `(snapshot_date, snapshot_year, snapshot_week)` schema only if verified from the live endpoint and approved.  
    - *Status:* **PENDING DEVANSH'S APPROVAL (Phase 8B Gate).**
@@ -500,7 +497,7 @@ The following three architectural decisions remain clearly marked as **REQUIRING
 
 The CourtIQ software product is officially deemed complete and ready for final capstone evaluation when all of the following criteria are met:
 
-1. **Relational Schema Completeness:** All 6 normalized tables (`categories`, `competitions`, `complexes`, `venues`, `competitors`, `competitor_rankings`) created via sequential migrations (`001`, `002`, `003`) with active foreign-key constraints.
+1. **Relational Schema Completeness:** All 6 normalized tables (`categories`, `competitions`, `complexes`, `venues`, `competitors`, `competitor_rankings`) created via sequential Alembic migrations (`0001_initial_competitions`, `0002_venues`, `0003_rankings`) with active foreign-key constraints.
 2. **20 Mandated SQL Queries Verified:** Every query specified in the project guide (Q1 through Q20) codified in `sql/queries/` and verified with automated assertions against test data.
 3. **Explicit Operating Modes:** Seamless operation in `LIVE` mode (with verified Sportradar API key) or `DEMO` mode (with clearly badged synthetic fixtures), with zero silent data switching.
 4. **Streamlit Multi-Page Experience:** Fully functional web application (`app.py`, `pages/1_Competitions.py`, `pages/2_Venues.py`, `pages/3_Rankings.py`) with responsive filters, interactive Plotly charts, data tables, and empty-state resilience.

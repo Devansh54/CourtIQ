@@ -3,7 +3,7 @@
 **Product Name:** CourtIQ – Tennis Data & Analytics Explorer  
 **Architecture Lead:** Devansh  
 **Architecture Style:** Modular Domain-Driven Layered Architecture  
-**Primary Database Engine:** PostgreSQL 16+ (via SQLAlchemy 2.x & Psycopg 3)  
+**Primary Database Engine:** PostgreSQL 18 (via SQLAlchemy 2.x Core & Psycopg 3)  
 **Status:** Scalable PostgreSQL Foundation Active  
 
 ---
@@ -15,7 +15,7 @@ CourtIQ is designed to meet enterprise software engineering standards rather tha
 1. **Separation of Concerns:** Distinct separation between API networking, data transformation, database persistence, analytical aggregation, and UI presentation.
 2. **Domain Encapsulation:** Clear boundaries between business domains (`competitions`, `venues`, `rankings`). Each domain encapsulates its own schemas, extractors, transformers, repositories, and analytics.
 3. **Shared Infrastructure Reusability:** Core cross-cutting concerns (connection-pooled database connectivity, API clients, logging, configuration, error handling) are centralized in `src/courtiq/core/` and consumed uniformly by all module owners.
-4. **True Multi-User Concurrency & Connection Pooling:** Database access uses SQLAlchemy 2.x `QueuePool` over PostgreSQL 16+ connections, eliminating single-writer locks and supporting concurrent Streamlit dashboard interactions.
+4. **True Multi-User Concurrency & Connection Pooling:** Database access uses SQLAlchemy 2.x `QueuePool` over PostgreSQL 18 connections, eliminating single-writer locks and supporting concurrent Streamlit dashboard interactions.
 5. **Least-Privilege Security & Role Separation:** DDL operations are isolated to a migration-specific role (`courtiq_migrator`), while runtime queries execute under a restricted DML role (`courtiq_app`).
 6. **Structured Migration Versioning:** Database schema evolution is managed through **Alembic**, providing deterministic and repeatable migrations across developer environments and CI/CD pipelines.
 
@@ -55,11 +55,11 @@ flowchart TD
         EXCEPTIONS["core/exceptions.py (Custom Exception Hierarchy)"]
     end
 
-    subgraph Persistence_Layer["5. Relational Persistence Layer (PostgreSQL 16+)"]
+    subgraph Persistence_Layer["5. Relational Persistence Layer (PostgreSQL 18)"]
         REPOS["Domain Repositories (Parameterized Named SQL)"]
         ALEMBIC["alembic/ (Version Revisions: 0001_initial_competitions)"]
         QUERIES["sql/queries/ (Domain-Specific Analytical SQL)"]
-        PG_DB[(PostgreSQL 16+ Database / courtiq)]
+        PG_DB[(PostgreSQL 18 Database / courtiq)]
         SQLITE_FALLBACK[(SQLite / Offline Test Fallback)]
     end
 
@@ -109,7 +109,7 @@ sequenceDiagram
     participant API as Sportradar REST API
     participant Transformer as Competitions Transformer
     participant Repo as Competitions Repository
-    participant PG as PostgreSQL 16+ Database
+    participant PG as PostgreSQL 18 Database
 
     CLI->>Runner: ingest_competitions()
     Runner->>DB_Mgr: run_migrations()
@@ -208,7 +208,7 @@ CourtIQ/
 │   ├── 1_Competitions.py          # Competitions explorer (Devansh)
 │   ├── 2_Venues.py                # Venues explorer (Mansi)
 │   └── 3_Rankings.py              # Rankings explorer (Nilakshi)
-├── compose.yaml                   # Docker Compose specification for PostgreSQL 16
+├── compose.yaml                   # Docker Compose specification for PostgreSQL 18
 ├── alembic.ini                    # Alembic migration configuration
 ├── alembic/                       # Alembic version migration scripts
 │   ├── env.py                     # Dynamic database URL resolution & migration runner

@@ -1,10 +1,10 @@
 # CourtIQ — Project Implementation Status & Tracking
 
 **Product Name:** CourtIQ – Tennis Data & Analytics Explorer  
-**Last Updated:** 2026-11-06  
-**Current Milestone:** Milestone 1 & PostgreSQL Migration Completed (Devansh — 50%) | Ready for Milestone 2  
+**Last Updated:** 2026-11-07  
+**Current Milestone:** Milestone 1 & PostgreSQL 18 Foundation Completed (Devansh — 50%) | Ready for Milestone 2  
 **Lead Architect:** Devansh  
-**Active Database Engine:** PostgreSQL 16+ (via SQLAlchemy 2.x Core & Psycopg 3; SQLite retained for test suites)  
+**Active Database Engine:** PostgreSQL 18 (via SQLAlchemy 2.x Core & Psycopg 3; SQLite retained for test fallback)  
 
 ---
 
@@ -36,9 +36,9 @@
 - [x] Master README (`README.md`).
 
 ### B. Scalable PostgreSQL Database Architecture & Infrastructure (New Milestone)
-- [x] Transitioned from single-threaded SQLite to **PostgreSQL 16+** backed by **SQLAlchemy 2.x Core** and **Psycopg 3** (`psycopg[binary]>=3.1.18`).
+- [x] Transitioned from single-threaded SQLite to **PostgreSQL 18** backed by **SQLAlchemy 2.x Core** and **Psycopg 3** (`psycopg[binary]>=3.1.18`).
 - [x] Implemented connection pooling via SQLAlchemy `QueuePool` (`size=5`, `max_overflow=10`, `timeout=30s`, `pool_recycle=1800s`, `pool_pre_ping=True`).
-- [x] Designed and deployed Docker Compose stack (`compose.yaml`) with `postgres:16-alpine`, persistent volume `postgres_data`, and healthchecks.
+- [x] Designed and deployed Docker Compose stack (`compose.yaml`) with `postgres:18-alpine`, persistent volume `postgres_data`, and healthchecks.
 - [x] Provisioned least-privilege security roles via `docker/postgres/init/01_init_roles.sql`:
   - `courtiq_migrator`: Dedicated DDL role for migrations.
   - `courtiq_app`: Restricted DML role (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) without destructive DDL permissions.
@@ -50,7 +50,7 @@
   - Idempotent upserts (`ON CONFLICT (...) DO UPDATE`).
   - Post-migration count verification.
 - [x] Authored complete PostgreSQL setup and operations guide (`docs/POSTGRESQL_SETUP.md`).
-- [x] Configured GitHub Actions CI workflow (`.github/workflows/ci.yml`) with PostgreSQL 16 service container.
+- [x] Configured GitHub Actions CI workflow (`.github/workflows/ci.yml`) with PostgreSQL 18 service container.
 
 ### C. Shared Core Infrastructure & Ingestion (14 Units)
 - [x] Centralized configuration manager (`src/courtiq/core/config.py`) with PostgreSQL URL, migration URL, pooling settings, and operating modes (`LIVE`/`DEMO`).
@@ -78,7 +78,7 @@
 - [x] Mandated SQL queries verification test verifying all 7 competition queries.
 - [x] End-to-end competitions pipeline integration test.
 - [x] Multi-user concurrency test suite (`tests/concurrency/test_concurrency.py`) simulating concurrent dashboard traffic and isolated transactions without pool exhaustion.
-- [x] **22 of 22 tests passing (100% pass rate).**
+- [x] **31 of 31 tests passing (100% pass rate).**
 
 ---
 
@@ -109,7 +109,11 @@
 
 ## 4. Current Git State & Verification
 
-- **Feature Branch:** `feature/postgresql-database-migration`
-- **Base Branch:** `devansh-foundation-competitions`
-- **Passing Tests:** 22 passing in pytest.
-- **SQLite Data State:** Preserved safely at `data/courtiq.db`.
+- **Base Integration Branch:** `devansh-foundation-competitions`
+- **PR #1 (PostgreSQL Database Migration):** Merged into `devansh-foundation-competitions` (commit `19a4c95`).
+- **PR #2 (Pre-Handoff Corrections & Audit):** Open and awaiting review on source branch `fix/api-mode-and-pre-handoff-audit`.
+- **Active Database Engine:** PostgreSQL 18 (`postgres:18-alpine` via Docker Compose).
+- **Verified Test Suite:** 31 of 31 tests passing (100% pass rate in pytest).
+- **Alembic Revision:** `0001_initial_competitions` applied to main database.
+- **Main Database Counts:** 5 categories, 19 competitions verified.
+- **SQLite Data State:** Preserved safely at `data/courtiq.db` (legacy migration source / offline testing fallback).
