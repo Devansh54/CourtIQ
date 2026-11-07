@@ -154,7 +154,7 @@ class SportradarClient:
             self._enforce_rate_limit()
 
             try:
-                logger.debug("Dispatching API GET to %s (attempt %d/%d)", url, attempt, self.max_retries)
+                logger.debug("Dispatching API GET to endpoint '%s' (attempt %d/%d)", clean_endpoint, attempt, self.max_retries)
                 response = self.session.get(url, params=query_params, timeout=self.timeout)
 
                 if response.status_code == 200:
@@ -167,7 +167,7 @@ class SportradarClient:
                     )
 
                 if response.status_code == 404:
-                    logger.error("Endpoint %s not found (404)", url)
+                    logger.error("Endpoint '%s' not found (404)", clean_endpoint)
                     raise ResourceNotFoundError(clean_endpoint)
 
                 if response.status_code == 429:
@@ -189,18 +189,26 @@ class SportradarClient:
                     backoff *= 2
                     continue
 
-                # Any other unexpected status
+                # Any other unexpected status - do not expose raw response.text which may echo query parameters
+                logger.error("Unexpected Sportradar API status %d received for endpoint '%s'", response.status_code, clean_endpoint)
                 raise APIError(
-                    f"Unexpected API response {response.status_code}: {response.text}",
+                    f"Unexpected Sportradar API status {response.status_code}",
                     status_code=response.status_code,
                 )
 
             except requests.RequestException as e:
-                logger.warning("Network/HTTP error on attempt %d/%d: %s", attempt, self.max_retries, e)
+                exc_type = type(e).__name__
+                logger.warning(
+                    "Network error (%s) on attempt %d/%d for endpoint '%s'",
+                    exc_type,
+                    attempt,
+                    self.max_retries,
+                    clean_endpoint,
+                )
                 if attempt >= self.max_retries:
                     raise APIError(
-                        f"Sportradar API request failed after {self.max_retries} retries: {e}"
-                    )
+                        f"Sportradar API request to '{clean_endpoint}' failed after {self.max_retries} retries."
+                    ) from None
                 time.sleep(backoff)
                 backoff *= 2
 

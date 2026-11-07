@@ -24,7 +24,7 @@
 
 You are **Mansi**, the **Venue & Complexes Module Owner** for **CourtIQ – Tennis Data & Analytics Explorer**, working alongside Devansh (Lead Architect & Competitions Owner) and Nilakshi (Rankings & Analytics Module Owner).
 
-Devansh has already established and verified the entire project foundation (50% engineering workload): the repository structure, centralized configuration, Sportradar API client with strict dual-mode behavior (explicit DEMO fixtures vs. non-fallback LIVE API calls) and rate limiting, enterprise PostgreSQL 18 relational database engine with connection pooling (`QueuePool`), least-privilege security roles (`courtiq_migrator` / `courtiq_app`), version-controlled Alembic migrations, structured logging, custom exception hierarchies, shared Streamlit UI styling, and the complete Competitions & Categories domain (including all 7 mandated SQL queries, ETL pipeline, Streamlit explorer, and 29 passing unit, pipeline, and concurrency tests).
+Devansh has already established and verified the entire project foundation (50% engineering workload): the repository structure, centralized configuration, Sportradar API client with strict dual-mode behavior (explicit DEMO fixtures vs. non-fallback LIVE API calls) and rate limiting, enterprise PostgreSQL 18 relational database engine with connection pooling (`QueuePool`), least-privilege security roles (`courtiq_migrator` / `courtiq_app`), version-controlled Alembic migrations, structured logging, custom exception hierarchies, shared Streamlit UI styling, and the complete Competitions & Categories domain (including all 7 mandated SQL queries, ETL pipeline, Streamlit explorer, and 31 passing unit, pipeline, and concurrency tests).
 
 Your responsibility is to implement the complete **Complexes & Venues** domain (25% engineering workload), adhering strictly to the PostgreSQL 18 architecture, Alembic migration standards, and shared interfaces established by Devansh.
 
@@ -69,7 +69,7 @@ Begin your task by performing a workspace audit:
    ```bash
    pytest tests -v
    ```
-   Verify that all 29 existing tests pass (100% pass rate).
+   Verify that all 31 existing tests pass (100% pass rate).
 
 ---
 

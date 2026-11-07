@@ -1,7 +1,7 @@
 """Unit tests for Sportradar API client.
 
 Verifies DEMO vs. LIVE mode behavior, rate limiting, retry semantics,
-and strict non-fallback guarantees in LIVE mode.
+strict non-fallback guarantees in LIVE mode, and prevention of API key leakage in logs/exceptions.
 """
 
 import time
@@ -149,7 +149,7 @@ def test_live_mode_network_timeout_after_retries():
 
     with patch.object(client.session, "get", side_effect=requests.Timeout("Connection timed out")) as mock_get:
         with patch.object(client, "_load_fixture_fallback") as mock_fallback:
-            with pytest.raises(APIError, match="Sportradar API request failed after 2 retries"):
+            with pytest.raises(APIError, match="Sportradar API request to 'competitions.json' failed after 2 retries"):
                 client.get("competitions.json")
             assert mock_get.call_count == 2
             # Crucial assertion: Must NEVER fall back to fixtures
@@ -187,3 +187,58 @@ def test_api_client_rate_limiting():
     elapsed = time.time() - start
 
     assert elapsed >= 0.18
+
+
+# --- SECURITY & SENSITIVE CREDENTIAL LEAKAGE TESTS ---
+
+
+def test_live_mode_does_not_leak_api_key_on_connection_error(caplog):
+    """Verify that sensitive API keys are not leaked in logs or APIError messages on connection failure."""
+    fake_secret = "secret_api_key_xyz_98765"
+    settings = Settings()
+    settings.courtiq_mode = "LIVE"
+    settings.sportradar_api_key = fake_secret
+    settings.sportradar_max_retries = 2
+    settings.sportradar_backoff_factor = 0.01
+    settings.sportradar_rate_limit_rps = 100.0
+    client = SportradarClient(settings)
+
+    leaked_url = f"https://api.sportradar.com/tennis/trial/v3/en/competitions.json?api_key={fake_secret}"
+    sensitive_err_msg = f"HTTPSConnectionPool(host='api.sportradar.com', port=443): Failed to establish connection with url: {leaked_url}"
+
+    with caplog.at_level("DEBUG"):
+        with patch.object(client.session, "get", side_effect=requests.ConnectionError(sensitive_err_msg)):
+            with pytest.raises(APIError) as exc_info:
+                client.get("competitions.json")
+
+    # 1. Verify fake secret does NOT appear anywhere in captured log text
+    assert fake_secret not in caplog.text
+    # 2. Verify fake secret does NOT appear in the raised APIError message
+    assert fake_secret not in str(exc_info.value)
+    # 3. Verify chained exception suppression (from None) prevents leakage via __cause__
+    assert exc_info.value.__cause__ is None
+
+
+def test_live_mode_does_not_leak_api_key_on_unexpected_response(caplog):
+    """Verify that unexpected HTTP response bodies echoing sensitive parameters do not leak into APIError or logs."""
+    fake_secret = "secret_api_key_xyz_98765"
+    settings = Settings()
+    settings.courtiq_mode = "LIVE"
+    settings.sportradar_api_key = fake_secret
+    settings.sportradar_rate_limit_rps = 100.0
+    client = SportradarClient(settings)
+
+    sensitive_response_body = f'{{"error": "Invalid request for key {fake_secret}"}}'
+    mock_resp = _create_mock_response(418, text=sensitive_response_body)
+
+    with caplog.at_level("DEBUG"):
+        with patch.object(client.session, "get", return_value=mock_resp):
+            with pytest.raises(APIError) as exc_info:
+                client.get("competitions.json")
+
+    # 1. Verify fake secret does NOT appear in captured log text
+    assert fake_secret not in caplog.text
+    # 2. Verify fake secret does NOT appear in raised APIError message
+    assert fake_secret not in str(exc_info.value)
+    # 3. Verify HTTP status code is safely preserved
+    assert exc_info.value.status_code == 418

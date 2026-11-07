@@ -78,7 +78,7 @@
 - [x] Mandated SQL queries verification test verifying all 7 competition queries.
 - [x] End-to-end competitions pipeline integration test.
 - [x] Multi-user concurrency test suite (`tests/concurrency/test_concurrency.py`) simulating concurrent dashboard traffic and isolated transactions without pool exhaustion.
-- [x] **29 of 29 tests passing (100% pass rate).**
+- [x] **31 of 31 tests passing (100% pass rate).**
 
 ---
 
@@ -113,7 +113,7 @@
 - **PR #1 (PostgreSQL Database Migration):** Merged into `devansh-foundation-competitions` (commit `19a4c95`).
 - **PR #2 (Pre-Handoff Corrections & Audit):** Open and awaiting review on source branch `fix/api-mode-and-pre-handoff-audit`.
 - **Active Database Engine:** PostgreSQL 18 (`postgres:18-alpine` via Docker Compose).
-- **Verified Test Suite:** 29 of 29 tests passing (100% pass rate in pytest).
+- **Verified Test Suite:** 31 of 31 tests passing (100% pass rate in pytest).
 - **Alembic Revision:** `0001_initial_competitions` applied to main database.
 - **Main Database Counts:** 5 categories, 19 competitions verified.
 - **SQLite Data State:** Preserved safely at `data/courtiq.db` (legacy migration source / offline testing fallback).
