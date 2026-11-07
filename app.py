@@ -141,7 +141,7 @@ env_col1, env_col2 = st.columns(2)
 with env_col1:
     st.markdown("#### Runtime Configuration")
     mode_text = "Synthetic Mock / Demo Mode" if settings.is_demo_mode else "Sportradar Live API Mode"
-    db_target = "PostgreSQL 16+ (Primary Production Engine)" if settings.is_postgres else "SQLite (Fallback / Local Testing)"
+    db_target = "PostgreSQL 18 (Primary Production Engine)" if settings.is_postgres else "SQLite (Fallback / Local Testing)"
     st.markdown(f"- **Operating Mode:** `{settings.courtiq_mode}` ({mode_text})")
     st.markdown(f"- **Relational Database:** `{db_target}`")
     st.markdown(f"- **Database Dialect:** `{settings.db_dialect}`")

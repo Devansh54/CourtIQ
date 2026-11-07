@@ -34,7 +34,7 @@ class Settings:
             self.courtiq_mode: str = normalized_mode
         else:
             key = os.getenv("SPORTRADAR_API_KEY")
-            is_placeholder = not key or key.strip().lower() in [
+            is_placeholder = not key or not key.strip() or key.strip().lower() in [
                 "your_sportradar_api_key_here", "placeholder", "changeme", "none", "test_key", "<your_sportradar_api_key>"
             ]
             self.courtiq_mode: str = "DEMO" if is_placeholder else "LIVE"
@@ -81,8 +81,11 @@ class Settings:
 
     @property
     def has_valid_api_key(self) -> bool:
-        """Return True if SPORTRADAR_API_KEY is configured and not a placeholder."""
+        """Return True if SPORTRADAR_API_KEY is configured and not blank or a placeholder."""
         if not self.sportradar_api_key:
+            return False
+        normalized_key = self.sportradar_api_key.strip().lower()
+        if not normalized_key:
             return False
         placeholder_indicators = {
             "your_sportradar_api_key_here",
@@ -92,7 +95,12 @@ class Settings:
             "test_key",
             "<your_sportradar_api_key>",
         }
-        return self.sportradar_api_key.strip().lower() not in placeholder_indicators
+        return normalized_key not in placeholder_indicators
+
+    @property
+    def db_pool_max_overflow(self) -> int:
+        """Alias for db_max_overflow."""
+        return self.db_max_overflow
 
     @property
     def is_demo_mode(self) -> bool:

@@ -3,7 +3,7 @@
 **Product Name:** CourtIQ – Tennis Data & Analytics Explorer  
 **Version:** 2.0.0 (PostgreSQL Foundation)  
 **Lead Architect:** Devansh  
-**Target Database:** PostgreSQL 16+ via SQLAlchemy 2.x & Psycopg 3  
+**Target Database:** PostgreSQL 18 via SQLAlchemy 2.x Core & Psycopg 3  
 
 ---
 
@@ -23,7 +23,7 @@ All code contributed to the CourtIQ platform must adhere strictly to professiona
 
 ## 2. PostgreSQL & Database Engineering Standards
 
-CourtIQ uses **PostgreSQL 16+** with **SQLAlchemy 2.x Core** and **Psycopg 3**. Contributors (Mansi and Nilakshi) must follow these database conventions:
+CourtIQ uses **PostgreSQL 18** with **SQLAlchemy 2.x Core** and **Psycopg 3**. Contributors (Mansi and Nilakshi) must follow these database conventions:
 
 ### 2.1 Strictly Named Parameterized Queries
 Under no circumstances should string concatenation or raw f-strings be used to interpolate values into SQL. Always use SQLAlchemy named parameters (`:param_name`):

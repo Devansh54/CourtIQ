@@ -76,16 +76,17 @@ def test_live_mode_successful_response():
 
 
 def test_live_mode_missing_api_key():
-    """Verify that LIVE mode fails immediately when API key is missing or empty."""
-    settings = Settings()
-    settings.courtiq_mode = "LIVE"
-    settings.sportradar_api_key = ""
-    client = SportradarClient(settings)
+    """Verify that LIVE mode fails immediately when API key is missing, empty, or whitespace-only."""
+    for blank_key in ["", "   ", "\t  \n  ", None]:
+        settings = Settings()
+        settings.courtiq_mode = "LIVE"
+        settings.sportradar_api_key = blank_key
+        client = SportradarClient(settings)
 
-    with patch.object(client.session, "get") as mock_get:
-        with pytest.raises(AuthenticationError, match="Sportradar API key is missing or set to a placeholder"):
-            client.get("competitions.json")
-        mock_get.assert_not_called()
+        with patch.object(client.session, "get") as mock_get:
+            with pytest.raises(AuthenticationError, match="Sportradar API key is missing or set to a placeholder"):
+                client.get("competitions.json")
+            mock_get.assert_not_called()
 
 
 def test_live_mode_placeholder_api_key():
