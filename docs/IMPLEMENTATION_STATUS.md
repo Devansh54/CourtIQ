@@ -1,10 +1,10 @@
 # CourtIQ — Project Implementation Status & Tracking
 
 **Product Name:** CourtIQ – Tennis Data & Analytics Explorer  
-**Last Updated:** 2026-11-06  
-**Current Milestone:** Milestone 1 & PostgreSQL Migration Completed (Devansh — 50%) | Ready for Milestone 2  
+**Last Updated:** 2026-11-07  
+**Current Milestone:** Milestone 1 & PostgreSQL 18 Foundation Completed (Devansh — 50%) | Ready for Milestone 2  
 **Lead Architect:** Devansh  
-**Active Database Engine:** PostgreSQL 18 (via SQLAlchemy 2.x Core & Psycopg 3; SQLite retained for test suites)  
+**Active Database Engine:** PostgreSQL 18 (via SQLAlchemy 2.x Core & Psycopg 3; SQLite retained for test fallback)  
 
 ---
 
