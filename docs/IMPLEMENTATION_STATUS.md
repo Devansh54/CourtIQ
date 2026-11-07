@@ -1,9 +1,10 @@
 # CourtIQ — Project Implementation Status & Tracking
 
 **Product Name:** CourtIQ – Tennis Data & Analytics Explorer  
-**Last Updated:** 2026-11-04  
-**Current Milestone:** Milestone 1 Completed (Devansh — 50%) | Ready for Milestone 2  
+**Last Updated:** 2026-11-06  
+**Current Milestone:** Milestone 1 & PostgreSQL Migration Completed (Devansh — 50%) | Ready for Milestone 2  
 **Lead Architect:** Devansh  
+**Active Database Engine:** PostgreSQL 16+ (via SQLAlchemy 2.x Core & Psycopg 3; SQLite retained for test suites)  
 
 ---
 
@@ -11,9 +12,9 @@
 
 | Contributor & Ownership | Planned Units | Completed Units | Progress (%) | Status |
 |---|:---:|:---:|:---:|:---:|
-| **Devansh** (Architecture, Infrastructure, Competitions) | 50 | 50 | **100%** | **Completed & Verified** |
-| **Venue & Complexes Module Owner** (Venues & Complexes) | 25 | 0 | **0%** | Ready for Handoff 1 |
-| **Rankings & Analytics Module Owner** (Rankings & Integration) | 25 | 0 | **0%** | Scheduled for Handoff 2 |
+| **Devansh** (Architecture, PostgreSQL Foundation, Competitions) | 50 | 50 | **100%** | **Completed & Verified** |
+| **Mansi** (Complexes & Venues Module) | 25 | 0 | **0%** | Ready for Handoff 1 |
+| **Nilakshi** (Doubles Rankings & Release Verification) | 25 | 0 | **0%** | Scheduled for Handoff 2 |
 | **Total Product Workload** | **100** | **50** | **50%** | **Foundation Milestone Complete** |
 
 ---
@@ -21,7 +22,7 @@
 ## 2. Devansh's Completed Implementation Checklist (50 / 50 Units)
 
 ### A. Repository & Architectural Foundations (12 Units)
-- [x] Initial workspace audit and comprehensive 14-page PDF analysis.
+- [x] Initial workspace audit and comprehensive project guide analysis.
 - [x] Git repository initialization and remote configuration (`https://github.com/Devansh54/CourtIQ.git`).
 - [x] Security setup: `.gitignore` and `.env.example` created.
 - [x] Reference guide preserved in `docs/reference/PROJECT_GUIDE.pdf`.
@@ -32,71 +33,83 @@
 - [x] API Documentation & Field Mappings (`docs/API_DOCUMENTATION.md`).
 - [x] Relational Data Dictionary (`docs/DATA_DICTIONARY.md`).
 - [x] Development Guidelines (`docs/DEVELOPMENT_GUIDELINES.md`).
-- [x] Implementation Plan (`docs/IMPLEMENTATION_PLAN.md`).
 - [x] Master README (`README.md`).
 
-### B. Shared Core Infrastructure (16 Units)
-- [x] Centralized configuration manager (`src/courtiq/core/config.py`).
-- [x] Database connection manager & transaction context (`src/courtiq/core/database.py`).
+### B. Scalable PostgreSQL Database Architecture & Infrastructure (New Milestone)
+- [x] Transitioned from single-threaded SQLite to **PostgreSQL 16+** backed by **SQLAlchemy 2.x Core** and **Psycopg 3** (`psycopg[binary]>=3.1.18`).
+- [x] Implemented connection pooling via SQLAlchemy `QueuePool` (`size=5`, `max_overflow=10`, `timeout=30s`, `pool_recycle=1800s`, `pool_pre_ping=True`).
+- [x] Designed and deployed Docker Compose stack (`compose.yaml`) with `postgres:16-alpine`, persistent volume `postgres_data`, and healthchecks.
+- [x] Provisioned least-privilege security roles via `docker/postgres/init/01_init_roles.sql`:
+  - `courtiq_migrator`: Dedicated DDL role for migrations.
+  - `courtiq_app`: Restricted DML role (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) without destructive DDL permissions.
+- [x] Adopted **Alembic** (`alembic.ini`, `alembic/env.py`, `alembic/versions/0001_initial_competitions.py`) for deterministic, version-controlled schema migrations.
+- [x] Created safe data migration script (`scripts/migrate_sqlite_to_postgres.py`):
+  - Automatic timestamped backup (`data/courtiq.db.bak_<timestamp>`).
+  - Safe `--dry-run` and `--apply` flags.
+  - Foreign key referential order preservation.
+  - Idempotent upserts (`ON CONFLICT (...) DO UPDATE`).
+  - Post-migration count verification.
+- [x] Authored complete PostgreSQL setup and operations guide (`docs/POSTGRESQL_SETUP.md`).
+- [x] Configured GitHub Actions CI workflow (`.github/workflows/ci.yml`) with PostgreSQL 16 service container.
+
+### C. Shared Core Infrastructure & Ingestion (14 Units)
+- [x] Centralized configuration manager (`src/courtiq/core/config.py`) with PostgreSQL URL, migration URL, pooling settings, and operating modes (`LIVE`/`DEMO`).
+- [x] Refactored `DatabaseManager` (`src/courtiq/core/database.py`) supporting connection pooling, ACID transaction contexts, named parameter queries (`:param`), DataFrame conversion, and Alembic runner.
 - [x] Sportradar API client with rate limiting & exponential backoff (`src/courtiq/core/api_client.py`).
 - [x] Domain-specific exception hierarchy (`src/courtiq/core/exceptions.py`).
 - [x] Structured logging configuration (`src/courtiq/core/logging_config.py`).
 - [x] Streamlit design system and utilities (`src/courtiq/utils/formatting.py`).
 
-### C. Competitions & Categories Domain (16 Units)
+### D. Competitions & Categories Domain (16 Units)
 - [x] Pydantic data models for Category and Competition (`schemas.py`).
-- [x] Database migration DDL (`sql/migrations/001_competitions.sql`).
+- [x] Alembic migration revision (`alembic/versions/0001_initial_competitions.py`).
 - [x] API Extractor (`extractor.py`).
 - [x] JSON Transformer and normalizer (`transformer.py`).
-- [x] Relational repository with all 7 required SQL queries (`repository.py`).
+- [x] Relational repository with all 7 required SQL queries updated for PostgreSQL named parameters (`repository.py`).
 - [x] Individual query files in `sql/queries/competitions/` (Q1 through Q7).
 - [x] Competitions analytics service (`analytics.py`).
-- [x] Ingestion pipeline orchestrator (`src/courtiq/ingestion/runner.py`) & script (`scripts/ingest_competitions.py`).
-- [x] Interactive Streamlit page (`pages/1_Competitions.py`).
+- [x] Ingestion pipeline orchestrator (`src/courtiq/ingestion/runner.py`) & executable CLI (`scripts/ingest_competitions.py`).
+- [x] Interactive Streamlit page (`pages/1_Competitions.py`) with telemetry in `app.py`.
 
-### D. Testing & Quality Assurance (6 Units)
-- [x] Realistic synthetic test fixtures in `tests/fixtures/` (competitions, complexes, rankings).
-- [x] Core configuration and database unit tests.
+### E. Testing & Quality Assurance (8 Units)
+- [x] Core configuration and database unit tests (`tests/unit/test_config.py`, `tests/unit/test_database.py`).
 - [x] Sportradar API client unit tests with rate limit verification.
 - [x] Competitions extractor, transformer, and repository unit tests.
+- [x] Mandated SQL queries verification test verifying all 7 competition queries.
 - [x] End-to-end competitions pipeline integration test.
-- [x] Query verification test verifying all 7 competition SQL queries.
-- [x] **18 of 18 tests passing (100% pass rate).**
-
-### E. Developer Handoff
-- [x] Copy-paste-ready developer handoff prompt created (`docs/handoffs/VENUES_MODULE_HANDOFF.md`).
+- [x] Multi-user concurrency test suite (`tests/concurrency/test_concurrency.py`) simulating concurrent dashboard traffic and isolated transactions without pool exhaustion.
+- [x] **22 of 22 tests passing (100% pass rate).**
 
 ---
 
 ## 3. Outstanding Work for Subsequent Contributors
 
 ### Milestone 2: Complexes & Venues (25 Effort Units)
-- **Assignee:** Venue & Complexes Module Owner
-- **Status:** Ready to begin immediately using `docs/handoffs/VENUES_MODULE_HANDOFF.md`.
+- **Assignee:** Mansi (Venue & Complexes Module Owner)
+- **Status:** Ready to begin immediately.
 - **Target Deliverables:**
-  - `sql/migrations/002_venues.sql`
+  - Alembic migration `alembic/versions/0002_venues.py`
   - Venues extractor, transformer, repository, analytics
-  - 7 SQL queries in `sql/queries/venues/`
+  - 7 SQL queries in `sql/queries/venues/` using named parameters
   - `pages/2_Venues.py`
   - Unit and integration tests in `tests/unit/venues/`
-  - `docs/handoffs/RANKINGS_MODULE_HANDOFF.md`
 
 ### Milestone 3: Doubles Competitor Rankings & Integration (25 Effort Units)
-- **Assignee:** Rankings & Analytics Module Owner
+- **Assignee:** Nilakshi (Rankings & Analytics Module Owner & Release Lead)
 - **Status:** Scheduled following completion of Milestone 2.
 - **Target Deliverables:**
-  - `sql/migrations/003_rankings.sql`
+  - Alembic migration `alembic/versions/0003_rankings.py`
   - Rankings extractor, transformer, repository, analytics
-  - 6 SQL queries in `sql/queries/rankings/`
+  - 6 SQL queries in `sql/queries/rankings/` using named parameters
   - `pages/3_Rankings.py`
   - Unit tests in `tests/unit/rankings/`
-  - System-wide regression test suite & final capstone report
+  - Final integration, end-to-end regression testing, and release verification
 
 ---
 
-## 4. Environment & Integration Telemetry
+## 4. Current Git State & Verification
 
-- **Git Branch:** `main` (foundation ready), working branch `devansh-foundation-competitions`.
-- **Remote Origin:** `https://github.com/Devansh54/CourtIQ.git` (Private).
-- **Relational Storage:** SQLite (`data/courtiq.db`) populated with 5 categories and 19 competitions.
-- **Pytest Suite:** 18 passed in 1.2s.
+- **Feature Branch:** `feature/postgresql-database-migration`
+- **Base Branch:** `devansh-foundation-competitions`
+- **Passing Tests:** 22 passing in pytest.
+- **SQLite Data State:** Preserved safely at `data/courtiq.db`.

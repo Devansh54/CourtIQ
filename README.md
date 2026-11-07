@@ -6,88 +6,92 @@
 
 CourtIQ is a Python-based tennis data exploration and analytics application built around the [Sportradar Tennis API](https://developer.sportradar.com/tennis/reference/tennis-overview). It brings together structured information about tennis competitions, sports complexes and venues, and doubles competitor rankings, with the aim of making that data easier to explore and analyse.
 
-The project combines API-based data collection, data validation and transformation, relational storage, SQL analytics, and an interactive [Streamlit](https://streamlit.io/) interface.
+The project combines API-based data collection, data validation and transformation, relational storage with **PostgreSQL 16+**, SQL analytics, and an interactive [Streamlit](https://streamlit.io/) interface.
+
+---
 
 ## Project domains
 
-CourtIQ is organised around three related areas of tennis data.
+CourtIQ is organised around three related areas of tennis data:
 
-### Competitions and categories
-
+### 1. Competitions and categories (Devansh — 50%)
 Explore competition metadata and how competitions are organised, including:
-
 - Competition names, categories, formats, and gender classifications.
 - Parent competitions and their sub-competition relationships.
 - Competition counts and format distributions across categories.
-- Filtering and searching by competition attributes.
+- Filtering, searching, and execution of all 7 required analytical queries.
 
-### Complexes and venues
-
+### 2. Complexes and venues (Mansi — 25%)
 Explore tennis facilities and their location information, including:
-
 - Sports complexes and the venues associated with them.
 - Venue names, cities, and countries.
 - Country codes and time zones.
 - Venue counts by complex and country.
 
-### Doubles competitor rankings
-
+### 3. Doubles competitor rankings (Nilakshi — 25%)
 Explore doubles ranking information and competitor metadata, including:
-
 - Competitor names and countries.
 - Ranking positions and movement.
 - Ranking points and competitions played.
 - Top-ranked competitors and country-level summaries.
 
+---
+
 ## Data workflow
 
-The application separates data collection and processing from persistence and presentation.
+The application separates data collection and processing from persistence and presentation:
 
 ```text
-Sportradar Tennis API
-        |
-        v
-Shared API client
-        |
-        v
-Domain-specific extraction
-        |
-        v
-Transformation and validation
-        |
-        v
-Relational SQL database
-        |
-        v
-Repositories and analytical queries
-        |
-        v
-Streamlit application
+Sportradar Tennis API (or Synthetic Demo Fixtures)
+        │
+        ▼
+Shared API Client (Rate-limited, retry backoff)
+        │
+        ▼
+Domain-Specific Extraction (Pydantic models)
+        │
+        ▼
+Transformation & Validation (Relational normalization)
+        │
+        ▼
+PostgreSQL 16+ Relational Database (SQLAlchemy 2.x Core & QueuePool)
+        │
+        ▼
+Repositories & Parameterized Analytical SQL Queries
+        │
+        ▼
+Interactive Streamlit Dashboard & Plotly Visualizations
 ```
 
-The codebase uses shared infrastructure for configuration, API communication, database access, logging, and exceptions. Domain-specific modules contain the data extraction, transformation, persistence, and analytical logic for each subject area.
+---
 
 ## Technology stack
 
-| Area | Technology |
-|---|---|
-| Language | Python 3.10+ |
-| Data provider | Sportradar Tennis API v3 |
-| HTTP client | Requests |
-| Data processing | Pandas |
-| Data validation | Pydantic |
-| Relational database | SQLite |
-| Application interface | Streamlit |
-| Visualisation | Plotly |
-| Testing | Pytest |
+| Area | Technology | Purpose |
+|---|---|---|
+| Language | Python 3.10+ (Tested on 3.12) | Core programming language |
+| Data provider | Sportradar Tennis API v3 | Official Tennis API data |
+| Relational database | PostgreSQL 16+ | Primary database (Docker Compose or native) |
+| Fallback database | SQLite | Offline environments & isolated unit test suites |
+| ORM / SQL engine | SQLAlchemy 2.x Core | Connection pooling (`QueuePool`), transactional contexts |
+| Database driver | Psycopg 3 (`psycopg[binary]>=3.1.18`) | High-performance PostgreSQL connector |
+| Migrations | Alembic (`>=1.13.0`) | Repeatable DDL schema migrations |
+| Containerisation | Docker Compose | One-command PostgreSQL service provisioning |
+| Data processing | Pandas | Relational querying and DataFrame analytics |
+| Data validation | Pydantic v2 | Strict JSON schema parsing and entity validation |
+| Application interface | Streamlit | Multi-page interactive analytics portal |
+| Visualisation | Plotly | Dynamic bar charts, sunbursts, and distributions |
+| Testing | Pytest | Unit, pipeline, and concurrency test suites |
+
+---
 
 ## Getting started
 
 ### Prerequisites
-
 - Python 3.10 or later
 - Git
-- A Sportradar Tennis API key for live API access
+- Docker & Docker Compose (recommended for PostgreSQL), or a local PostgreSQL 16+ installation
+- A Sportradar Tennis API key (optional; system includes DEMO mode with bundled fixtures)
 
 ### 1. Clone the repository
 
@@ -98,15 +102,13 @@ cd CourtIQ
 
 ### 2. Create and activate a virtual environment
 
-**Windows PowerShell**
-
+**Windows PowerShell:**
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-**macOS / Linux**
-
+**macOS / Linux:**
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
@@ -119,123 +121,168 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 4. Configure environment variables
+### 4. Start PostgreSQL with Docker Compose
 
-Create a local `.env` file from the example template.
+Launch the PostgreSQL 16 database container with persistent storage and pre-configured roles:
 
-**Windows PowerShell**
+```bash
+docker compose up -d
+```
 
+Verify that the container is healthy:
+```bash
+docker compose ps
+```
+
+*(For manual PostgreSQL installation or troubleshooting, see the [PostgreSQL Setup Guide](docs/POSTGRESQL_SETUP.md)).*
+
+### 5. Configure environment variables
+
+Create your local `.env` configuration file from the template:
+
+**Windows PowerShell:**
 ```powershell
 Copy-Item .env.example .env
 ```
 
-**macOS / Linux**
-
+**macOS / Linux:**
 ```bash
 cp .env.example .env
 ```
 
-Add your Sportradar API key to `.env`:
-
+If you have a live Sportradar API key, set `COURTIQ_MODE=LIVE` and supply your key:
 ```dotenv
-SPORTRADAR_API_KEY=your_api_key_here
+COURTIQ_MODE=LIVE
+SPORTRADAR_API_KEY=your_actual_key_here
+```
+To run offline without API keys, leave `COURTIQ_MODE=DEMO`.
+
+### 6. Run database migrations
+
+Apply database schema tables using Alembic:
+
+```bash
+alembic upgrade head
 ```
 
-The example file also contains settings for the API base URL, request timeout, request pacing, retry behaviour, database location, and logging.
+### 7. (Optional) Migrate historical SQLite data
 
-**Keep credentials private.** Do not commit `.env`, API keys, or other secrets. The repository includes `.env.example` for configuration reference.
+If upgrading an existing installation with data in `data/courtiq.db`, transfer all records into PostgreSQL:
 
-### 5. Ingest competition data
+```bash
+# Preview records to be transferred (safe dry run)
+python scripts/migrate_sqlite_to_postgres.py --dry-run
 
-The competition ingestion script applies pending database migrations and runs the competitions data pipeline:
+# Execute data migration with automated SQLite backup
+python scripts/migrate_sqlite_to_postgres.py --apply
+```
+
+### 8. Ingest competition data
+
+Run the ingestion pipeline to populate tournament categories and competitions:
 
 ```bash
 python scripts/ingest_competitions.py
 ```
 
-The current API client can use bundled synthetic fixtures when no usable API key is configured, and may fall back to fixtures after repeated network failures. Fixture-backed records are sample data; they are not live Sportradar data.
-
-### 6. Run the application
+### 9. Run the Streamlit application
 
 ```bash
 streamlit run app.py
 ```
 
-Open the local URL printed by Streamlit, usually <http://localhost:8501>.
+Open the local URL in your browser: <http://localhost:8501>.
 
-### 7. Run the tests
+### 10. Run automated tests
+
+Execute the unit, integration, and concurrency test suites:
 
 ```bash
 python -m pytest tests -v
 ```
 
-## Database
+---
 
-The current database manager uses SQLite. By default, the database file is stored at:
+## Database architecture & security
 
-```text
-data/courtiq.db
-```
+CourtIQ uses **PostgreSQL 16+** as its primary relational engine, configured with strict least-privilege security roles:
 
-Database schema changes are maintained as ordered SQL migration files in `sql/migrations/`. The data model is organised around these related entities:
+- `courtiq_migrator`: Dedicated DDL role used by Alembic migrations to create and alter schema tables.
+- `courtiq_app`: Restricted DML role used at application runtime for `SELECT`, `INSERT`, `UPDATE`, `DELETE` queries. This role cannot perform destructive DDL actions like `DROP` or `ALTER TABLE`.
+- **Connection Pooling:** Managed via SQLAlchemy 2.x `QueuePool` with health pre-pinging (`pool_pre_ping=True`) and connection recycling to handle concurrent Streamlit user traffic without deadlocks.
 
-| Data area | Tables | Relationship |
+| Data Area | Tables | Key Relationships |
 |---|---|---|
-| Competitions | `categories`, `competitions` | A category can contain multiple competitions; competitions can reference a parent competition. |
-| Venues | `complexes`, `venues` | A complex can contain multiple venues. |
-| Rankings | `competitors`, `competitor_rankings` | A competitor can have associated ranking records. |
+| Competitions | `categories`, `competitions` | Self-referencing foreign key for parent/child tournament hierarchies. |
+| Venues | `complexes`, `venues` | A complex contains multiple individual venues/courts. |
+| Rankings | `competitors`, `competitor_rankings` | Weekly ranking snapshots linked to competitor records. |
 
-For table definitions, constraints, and the entity-relationship diagram, see [Database Design](docs/DATABASE_DESIGN.md).
+For full table schemas, column data types, indexes, and constraints, see [Database Design](docs/DATABASE_DESIGN.md) and [PostgreSQL Setup](docs/POSTGRESQL_SETUP.md).
+
+---
 
 ## Repository structure
 
 ```text
 CourtIQ/
-├── app.py                         # Streamlit application entry point
-├── pages/                         # Streamlit pages
+├── app.py                         # Streamlit application entry point & dashboard
+├── pages/                         # Streamlit domain exploration pages
+│   ├── 1_Competitions.py          # Competitions explorer (Devansh)
+│   ├── 2_Venues.py                # Venues explorer (Mansi)
+│   └── 3_Rankings.py              # Rankings explorer (Nilakshi)
+├── compose.yaml                   # Docker Compose specification for PostgreSQL 16
+├── alembic.ini                    # Alembic migration configuration
+├── alembic/                       # Alembic version migration scripts
+│   ├── env.py                     # Dynamic database URL resolution & migration runner
+│   └── versions/                  # Revision scripts (0001_initial_competitions.py)
+├── docker/
+│   └── postgres/init/             # Container role initialization SQL (01_init_roles.sql)
 ├── src/
 │   └── courtiq/
-│       ├── core/                  # Configuration, API client and database access
+│       ├── core/                  # Configuration, database manager, pooling, API client
 │       ├── domains/
-│       │   ├── competitions/      # Competition data and analytics
-│       │   ├── venues/             # Complex and venue domain
-│       │   └── rankings/           # Competitor ranking domain
-│       ├── ingestion/              # Data ingestion orchestration
-│       └── utils/                  # Shared application utilities
+│       │   ├── competitions/      # Competitions schemas, extractor, repo, analytics
+│       │   ├── venues/            # Venues domain scaffolding (ready for Mansi)
+│       │   └── rankings/          # Rankings domain scaffolding (ready for Nilakshi)
+│       ├── ingestion/             # Pipeline orchestration runner
+│       └── utils/                 # Visual styling, formatting, CSS
 ├── sql/
-│   ├── migrations/                # Database schema migrations
-│   └── queries/                   # Domain-specific analytical SQL
-├── scripts/                       # Command-line utilities
+│   ├── migrations/                # Historical SQL migration reference
+│   └── queries/competitions/      # Project guide mandated SQL queries (q1–q7)
+├── scripts/
+│   ├── ingest_competitions.py     # Competitions ingestion executable CLI
+│   └── migrate_sqlite_to_postgres.py # Safe SQLite-to-PostgreSQL migration utility
 ├── tests/
-│   ├── fixtures/                  # Sample API payloads
-│   ├── unit/                      # Unit tests
-│   └── integration/               # Integration tests
-└── docs/                           # Project and technical documentation
+│   ├── fixtures/                  # Offline sample API JSON payloads
+│   ├── unit/                      # Database, config, schema, repository unit tests
+│   ├── integration/               # End-to-end pipeline integration tests
+│   └── concurrency/               # Multi-threaded connection pool load tests
+└── docs/                          # Comprehensive technical and architectural documentation
+    ├── POSTGRESQL_SETUP.md        # Detailed PostgreSQL & Docker configuration guide
+    ├── ARCHITECTURE.md            # Target system architecture and data flows
+    ├── DATABASE_DESIGN.md         # Database schema, normalization, and constraints
+    ├── DEVELOPMENT_GUIDELINES.md  # Contributor guidelines for Mansi & Nilakshi
+    ├── IMPLEMENTATION_STATUS.md   # Current implementation tracking & milestones
+    └── TEAM_WORK_ALLOCATION.md    # 50% / 25% / 25% workload distribution agreement
 ```
 
-## API references
-
-CourtIQ uses the Sportradar Tennis API. Consult the official documentation for endpoint specifications, response formats, authentication, and subscription requirements:
-
-- [Sportradar Tennis API overview](https://developer.sportradar.com/tennis/reference/tennis-overview)
-- [Competitions endpoint](https://developer.sportradar.com/tennis/reference/competitions)
-- [Complexes endpoint](https://developer.sportradar.com/tennis/reference/complexes)
-- [Doubles competitor rankings endpoint](https://developer.sportradar.com/tennis/reference/doubles-competitor-rankings)
-
-API availability, request limits, and quotas depend on the Sportradar plan associated with the API key.
+---
 
 ## Project documentation
 
 Further technical details are maintained in the `docs/` directory:
 
-- [Project overview](docs/PROJECT_OVERVIEW.md)
+- [PostgreSQL Setup & Migration Guide](docs/POSTGRESQL_SETUP.md)
+- [System Architecture](docs/ARCHITECTURE.md)
+- [Database Design](docs/DATABASE_DESIGN.md)
+- [Development Guidelines](docs/DEVELOPMENT_GUIDELINES.md)
+- [Implementation Status](docs/IMPLEMENTATION_STATUS.md)
+- [Team Work Allocation](docs/TEAM_WORK_ALLOCATION.md)
+- [Project Overview](docs/PROJECT_OVERVIEW.md)
 - [Requirements](docs/REQUIREMENTS.md)
-- [System architecture](docs/ARCHITECTURE.md)
-- [Database design](docs/DATABASE_DESIGN.md)
-- [API documentation](docs/API_DOCUMENTATION.md)
-- [Data dictionary](docs/DATA_DICTIONARY.md)
-- [Development guidelines](docs/DEVELOPMENT_GUIDELINES.md)
-- [Original project guide](docs/reference/PROJECT_GUIDE.pdf)
+- [Data Dictionary](docs/DATA_DICTIONARY.md)
+
+---
 
 ## License
 

@@ -3,7 +3,8 @@
 **Product Name:** CourtIQ – Tennis Data & Analytics Explorer  
 **Architecture Lead:** Devansh  
 **Architecture Style:** Modular Domain-Driven Layered Architecture  
-**Status:** Baseline Defined  
+**Primary Database Engine:** PostgreSQL 16+ (via SQLAlchemy 2.x & Psycopg 3)  
+**Status:** Scalable PostgreSQL Foundation Active  
 
 ---
 
@@ -13,10 +14,10 @@ CourtIQ is designed to meet enterprise software engineering standards rather tha
 
 1. **Separation of Concerns:** Distinct separation between API networking, data transformation, database persistence, analytical aggregation, and UI presentation.
 2. **Domain Encapsulation:** Clear boundaries between business domains (`competitions`, `venues`, `rankings`). Each domain encapsulates its own schemas, extractors, transformers, repositories, and analytics.
-3. **Shared Infrastructure Reusability:** Core cross-cutting concerns (database connectivity, API clients, logging, configuration, error handling) are centralized in `src/courtiq/core/` and consumed uniformly by all module owners.
-4. **Idempotent Ingestion:** Repetitive ingestion runs must update or merge records safely without primary/foreign-key violations or duplicated entries.
-5. **Fail-Safe Offline Mode:** In the absence of live Sportradar API keys, the system transparently utilizes verified synthetic mock fixtures, ensuring full testability and offline demonstration capability.
-6. **Zero-Friction Group Handoff:** Clean directory structures and explicit interface contracts enable sequential development across independent contributor environments.
+3. **Shared Infrastructure Reusability:** Core cross-cutting concerns (connection-pooled database connectivity, API clients, logging, configuration, error handling) are centralized in `src/courtiq/core/` and consumed uniformly by all module owners.
+4. **True Multi-User Concurrency & Connection Pooling:** Database access uses SQLAlchemy 2.x `QueuePool` over PostgreSQL 16+ connections, eliminating single-writer locks and supporting concurrent Streamlit dashboard interactions.
+5. **Least-Privilege Security & Role Separation:** DDL operations are isolated to a migration-specific role (`courtiq_migrator`), while runtime queries execute under a restricted DML role (`courtiq_app`).
+6. **Structured Migration Versioning:** Database schema evolution is managed through **Alembic**, providing deterministic and repeatable migrations across developer environments and CI/CD pipelines.
 
 ---
 
@@ -26,9 +27,9 @@ CourtIQ is designed to meet enterprise software engineering standards rather tha
 flowchart TD
     subgraph UI_Layer["1. Presentation Layer (Streamlit)"]
         APP["app.py (Homepage Dashboard & Global KPIs)"]
-        PAGE1["pages/1_Competitions.py (Devansh)"]
-        PAGE2["pages/2_Venues.py (Venue Owner)"]
-        PAGE3["pages/3_Rankings.py (Rankings Owner)"]
+        PAGE1["pages/1_Competitions.py (Devansh - 50%)"]
+        PAGE2["pages/2_Venues.py (Mansi - 25%)"]
+        PAGE3["pages/3_Rankings.py (Nilakshi - 25%)"]
         UI_UTILS["src/courtiq/utils/formatting.py (Design System)"]
     end
 
@@ -47,18 +48,19 @@ flowchart TD
     end
 
     subgraph Core_Infra["4. Core Infrastructure Layer"]
-        CONFIG["core/config.py (Environment & Settings)"]
+        CONFIG["core/config.py (Pydantic Settings, Env & Pool Config)"]
         API_CLIENT["core/api_client.py (Sportradar HTTP Client)"]
-        DB_MGR["core/database.py (Connection & Transactions)"]
-        LOGGING["core/logging_config.py (Structured Logs)"]
+        DB_MGR["core/database.py (SQLAlchemy 2.x Engine & QueuePool)"]
+        LOGGING["core/logging_config.py (Structured Logging)"]
         EXCEPTIONS["core/exceptions.py (Custom Exception Hierarchy)"]
     end
 
-    subgraph Persistence_Layer["5. Relational Persistence Layer (SQL)"]
-        REPOS["Domain Repositories (Parameterized SQL)"]
-        MIGRATIONS["sql/migrations/ (001, 002, 003)"]
-        QUERIES["sql/queries/ (20 Analytical SQL Files)"]
-        DB[(courtiq.db / SQLite Relational Storage)]
+    subgraph Persistence_Layer["5. Relational Persistence Layer (PostgreSQL 16+)"]
+        REPOS["Domain Repositories (Parameterized Named SQL)"]
+        ALEMBIC["alembic/ (Version Revisions: 0001_initial_competitions)"]
+        QUERIES["sql/queries/ (Domain-Specific Analytical SQL)"]
+        PG_DB[(PostgreSQL 16+ Database / courtiq)]
+        SQLITE_FALLBACK[(SQLite / Offline Test Fallback)]
     end
 
     subgraph External_Layer["6. External Integration"]
@@ -74,7 +76,8 @@ flowchart TD
 
     COMP_SVC & VEN_SVC & RNK_SVC --> REPOS
     REPOS --> DB_MGR
-    DB_MGR --> DB
+    DB_MGR --> PG_DB
+    DB_MGR -.-> SQLITE_FALLBACK
 
     RUNNER --> COMP_ETL & VEN_ETL & RNK_ETL
     COMP_ETL & VEN_ETL & RNK_ETL --> SCHEMAS
@@ -86,57 +89,63 @@ flowchart TD
     VEN_ETL --> REPOS
     RNK_ETL --> REPOS
     
-    DB_MGR --> MIGRATIONS
+    DB_MGR --> ALEMBIC
 ```
 
 ---
 
 ## 3. End-to-End Data Ingestion Sequence
 
-The data pipeline guarantees strict validation and transactional integrity. Nested API payloads are parsed into immutable Pydantic entities before insertion into the relational database.
+The data pipeline guarantees strict validation and transactional integrity. Nested API payloads are parsed into immutable Pydantic entities before insertion into the relational database via PostgreSQL idempotent upserts (`ON CONFLICT (...) DO UPDATE`).
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor CLI as Ingestion Script / Admin
     participant Runner as Ingestion Runner
-    participant Extractor as Domain Extractor
+    participant DB_Mgr as DatabaseManager
+    participant Extractor as Competitions Extractor
     participant Client as Sportradar API Client
     participant API as Sportradar REST API
-    participant Transformer as Domain Transformer
-    participant Repo as Domain Repository
-    participant DB as Relational Database
+    participant Transformer as Competitions Transformer
+    participant Repo as Competitions Repository
+    participant PG as PostgreSQL 16+ Database
 
-    CLI->>Runner: execute_ingestion(domain="competitions")
+    CLI->>Runner: ingest_competitions()
+    Runner->>DB_Mgr: run_migrations()
+    DB_Mgr->>PG: Apply pending Alembic revisions (upgrade head)
     Runner->>Extractor: extract()
     Extractor->>Client: get(endpoint="/competitions.json")
     
-    alt API Key Provided
-        Client->>API: HTTP GET (Bearer / api_key, Rate-Limited)
+    alt LIVE Mode with Valid Key
+        Client->>API: HTTP GET (api_key, 1 RPS rate-limited)
         API-->>Client: 200 OK (Nested JSON Payload)
-    else Mock / Fallback Mode
+    else DEMO Mode
         Client->>Client: Load tests/fixtures/competitions_sample.json
     end
     
     Client-->>Extractor: Raw JSON Dictionary
     Extractor-->>Runner: Raw JSON Dictionary
     Runner->>Transformer: transform(raw_json)
-    Transformer->>Transformer: Validate Categories & Competitions (Pydantic)
+    Transformer->>Transformer: Validate Categories & Competitions (Pydantic v2)
     Transformer-->>Runner: (List[Category], List[Competition])
-    Runner->>Repo: save_all(categories, competitions)
-    Repo->>DB: BEGIN TRANSACTION
-    Repo->>DB: INSERT OR REPLACE INTO categories VALUES (...)
-    Repo->>DB: INSERT OR REPLACE INTO competitions VALUES (...)
-    Repo->>DB: COMMIT TRANSACTION
+    Runner->>Repo: save_categories(categories)
+    Repo->>PG: BEGIN TRANSACTION
+    Repo->>PG: INSERT INTO categories ... ON CONFLICT (category_id) DO UPDATE ...
+    Repo->>PG: COMMIT
+    Runner->>Repo: save_competitions(competitions)
+    Repo->>PG: BEGIN TRANSACTION
+    Repo->>PG: INSERT INTO competitions ... ON CONFLICT (competition_id) DO UPDATE ...
+    Repo->>PG: COMMIT
     Repo-->>Runner: IngestionSummary (saved=N, errors=0)
-    Runner-->>CLI: Done
+    Runner-->>CLI: IngestionResult(SUCCESS)
 ```
 
 ---
 
 ## 4. UI Query & Presentation Sequence
 
-During ordinary Streamlit dashboard usage, no live API calls are made. Queries execute directly against the optimized relational database with Streamlit caching.
+During ordinary Streamlit dashboard usage, no external API calls are made. Queries execute directly against the PostgreSQL database through pooled connections.
 
 ```mermaid
 sequenceDiagram
@@ -145,130 +154,86 @@ sequenceDiagram
     participant UI as Streamlit Page (1_Competitions.py)
     participant Analytics as Competitions Analytics Service
     participant Repo as Competitions Repository
-    participant DB as SQLite Relational Database
+    participant Pool as SQLAlchemy QueuePool
+    participant PG as PostgreSQL Database
 
     User->>UI: Select Category Filter ("ITF Men")
-    UI->>Analytics: get_competitions_by_category(category_name="ITF Men")
-    Analytics->>Repo: execute_query("q4_by_specific_category.sql", params)
-    Repo->>DB: SELECT c.competition_id, c.competition_name, ... FROM competitions c JOIN categories cat ...
-    DB-->>Repo: Result Records
+    UI->>Analytics: get_competitions_by_category("ITF Men")
+    Analytics->>Repo: query_4_by_category("ITF Men")
+    Repo->>Pool: Acquire pooled connection
+    Pool->>PG: SELECT c.competition_id, ... FROM competitions c JOIN categories cat ... WHERE LOWER(cat.category_name) = LOWER(:category_target)
+    PG-->>Pool: Result Cursor
+    Pool->>Repo: Result Set
+    Pool->>Pool: Release connection back to pool
     Repo-->>Analytics: Pandas DataFrame
-    Analytics-->>UI: Filtered DataFrame + Hierarchy Metrics
-    UI->>UI: Render Plotly Hierarchy & Interactive Data Table
-    UI-->>User: Display Formatted View
+    Analytics-->>UI: Formatted DataFrame
+    UI->>UI: Render Plotly Charts & Interactive Table
+    UI-->>User: Visual Dashboard View
 ```
 
 ---
 
-## 5. Directory Architecture & Boundary Contracts
+## 5. Persistence & Connection Pool Architecture
 
-The codebase strictly preserves the following directory structure:
+### 5.1 SQLAlchemy 2.x Engine & Connection Pooling
+The application instantiates a centralized `DatabaseManager` backed by a SQLAlchemy `Engine`:
+- **Pool Class:** `QueuePool` (default for PostgreSQL).
+- **Pool Size:** `DB_POOL_SIZE` (default: 5 concurrent connections).
+- **Max Overflow:** `DB_MAX_OVERFLOW` (default: 10 burst connections).
+- **Connection Timeout:** `DB_POOL_TIMEOUT` (default: 30 seconds).
+- **Recycle Interval:** `DB_POOL_RECYCLE` (default: 1800 seconds / 30 mins to avoid stale TCP drops).
+- **Health Verification:** `pool_pre_ping=True` actively tests connections with a lightweight `SELECT 1` ping before handing them to caller threads.
+
+### 5.2 Transaction Management & Safe Contexts
+```python
+# Context-managed transactional execution
+with db.transaction() as conn:
+    conn.execute(statement, params)
+    # Automatically committed upon clean exit; automatically rolled back on exception
+```
+
+### 5.3 Alembic Schema Evolution
+All database DDL is versioned as migrations under `alembic/versions/`:
+- `0001_initial_competitions.py`: Creates `categories` and `competitions` tables, constraints, foreign keys, and indexes.
+- Future versions `0002_venues.py` (Mansi) and `0003_rankings.py` (Nilakshi) extend the schema modularly without data loss.
+
+---
+
+## 6. Directory Structure
 
 ```text
 CourtIQ/
-│
-├── app.py                          # Streamlit Entrypoint & Global KPI Dashboard
-├── requirements.txt                # Production Dependencies
-├── pyproject.toml                  # Python Packaging & Pytest Settings
-├── README.md                       # Master Documentation
-├── .env.example                    # Environment Template
-├── .gitignore                      # Security and Artifact Exclusions
-│
+├── app.py                         # Streamlit application entry point & dashboard
+├── pages/                         # Streamlit domain exploration pages
+│   ├── 1_Competitions.py          # Competitions explorer (Devansh)
+│   ├── 2_Venues.py                # Venues explorer (Mansi)
+│   └── 3_Rankings.py              # Rankings explorer (Nilakshi)
+├── compose.yaml                   # Docker Compose specification for PostgreSQL 16
+├── alembic.ini                    # Alembic migration configuration
+├── alembic/                       # Alembic version migration scripts
+│   ├── env.py                     # Dynamic database URL resolution & migration runner
+│   └── versions/                  # Revision scripts (0001_initial_competitions.py)
+├── docker/
+│   └── postgres/init/             # Container role initialization SQL (01_init_roles.sql)
 ├── src/
 │   └── courtiq/
-│       ├── __init__.py
-│       │
-│       ├── core/                   # SHARED FOUNDATION (Devansh)
-│       │   ├── __init__.py
-│       │   ├── config.py           # Pydantic Settings & Env Loader
-│       │   ├── database.py         # DB Manager, Migration Engine & Transactions
-│       │   ├── api_client.py       # Sportradar HTTP Client with Rate-Limit & Retries
-│       │   ├── exceptions.py       # Domain Exception Hierarchy
-│       │   └── logging_config.py   # Structured Logging
-│       │
-│       ├── domains/                # DOMAIN MODULES
-│       │   ├── __init__.py
-│       │   ├── competitions/       # COMPETITIONS DOMAIN (Devansh - 50%)
-│       │   │   ├── __init__.py
-│       │   │   ├── schemas.py      # Pydantic Models (Category, Competition)
-│       │   │   ├── extractor.py    # API Extractor
-│       │   │   ├── transformer.py  # JSON Normalizer
-│       │   │   ├── repository.py   # SQL Persistence & 7 Queries
-│       │   │   └── analytics.py    # Analytics Service
-│       │   │
-│       │   ├── venues/             # VENUES DOMAIN (Venue Owner - 25%)
-│       │   │   ├── schemas.py
-│       │   │   ├── extractor.py
-│       │   │   ├── transformer.py
-│       │   │   ├── repository.py
-│       │   │   └── analytics.py
-│       │   │
-│       │   └── rankings/           # RANKINGS DOMAIN (Rankings Owner - 25%)
-│       │       ├── schemas.py
-│       │       ├── extractor.py
-│       │       ├── transformer.py
-│       │       ├── repository.py
-│       │       └── analytics.py
-│       │
-│       ├── ingestion/              # PIPELINE ORCHESTRATION
-│       │   ├── __init__.py
-│       │   └── runner.py           # CLI Pipeline Runner
-│       │
-│       └── utils/                  # SHARED UTILITIES
-│           ├── __init__.py
-│           └── formatting.py       # Streamlit CSS, Metrics, and Badges
-│
-├── pages/                          # STREAMLIT MULTI-PAGE APPLICATION
-│   ├── 1_Competitions.py           # Competitions Explorer (Devansh)
-│   ├── 2_Venues.py                 # Venues Explorer (Venue Owner)
-│   └── 3_Rankings.py               # Rankings Explorer (Rankings Owner)
-│
-├── sql/                            # RAW SQL FILES
-│   ├── migrations/                 # DDL Schemas (001, 002, 003)
-│   └── queries/                    # All 20 Documented Queries
-│       ├── competitions/           # 7 Queries (Devansh)
-│       ├── venues/                 # 7 Queries (Venue Owner)
-│       └── rankings/               # 6 Queries (Rankings Owner)
-│
-├── scripts/                        # RUNNABLE SCRIPTS
-│   └── ingest_competitions.py      # Competitions Ingestion Executable
-│
-├── tests/                          # TEST SUITE
-│   ├── conftest.py
-│   ├── fixtures/                   # Realistic Mock Payloads
-│   ├── unit/                       # Unit Tests (Core & Competitions)
-│   └── integration/                # End-to-end Integration Tests
-│
-└── docs/                           # COMPREHENSIVE DOCUMENTATION
-    ├── reference/PROJECT_GUIDE.pdf # Preserved Original Source Guide
-    ├── handoffs/                   # Contributor Handoff Prompts
-    ├── REQUIREMENTS.md             # RTM Matrix
-    ├── ARCHITECTURE.md             # Architectural Design
-    ├── DATABASE_DESIGN.md          # ERD & Schema Specs
-    ├── API_DOCUMENTATION.md        # API Specifications & Mapping
-    ├── DATA_DICTIONARY.md          # Column-Level Definitions
-    ├── TEAM_WORK_ALLOCATION.md     # 50-25-25 Distribution
-    ├── DEVELOPMENT_GUIDELINES.md   # Coding Standards & Git Rules
-    └── IMPLEMENTATION_STATUS.md    # Real-Time Project Tracking
+│       ├── core/                  # Configuration, database manager, pooling, API client
+│       ├── domains/
+│       │   ├── competitions/      # Competitions schemas, extractor, repo, analytics
+│       │   ├── venues/            # Venues domain scaffolding (ready for Mansi)
+│       │   └── rankings/          # Rankings domain scaffolding (ready for Nilakshi)
+│       ├── ingestion/             # Pipeline orchestration runner
+│       └── utils/                 # Visual styling, formatting, CSS
+├── sql/
+│   ├── migrations/                # Historical SQL migration reference
+│   └── queries/competitions/      # Project guide mandated SQL queries (q1–q7)
+├── scripts/
+│   ├── ingest_competitions.py     # Competitions ingestion executable CLI
+│   └── migrate_sqlite_to_postgres.py # Safe SQLite-to-PostgreSQL migration utility
+├── tests/
+│   ├── fixtures/                  # Offline sample API JSON payloads
+│   ├── unit/                      # Database, config, schema, repository unit tests
+│   ├── integration/               # End-to-end pipeline integration tests
+│   └── concurrency/               # Multi-threaded connection pool load tests
+└── docs/                          # Comprehensive technical and architectural documentation
 ```
-
----
-
-## 6. Shared Component Specifications
-
-### 6.1 Centralized Configuration (`core/config.py`)
-Encapsulates all settings via `pydantic-settings` or dataclasses:
-- `SPORTRADAR_API_KEY`: API key for trial access.
-- `SPORTRADAR_BASE_URL`: Defaults to `https://api.sportradar.com/tennis/trial/v3/en`.
-- `COURTIQ_DB_PATH`: Defaults to `data/courtiq.db`.
-- `LOG_LEVEL`: Configurable logging level.
-
-### 6.2 Sportradar API Client (`core/api_client.py`)
-- Rate limiting: strictly adheres to Sportradar's trial rate limit of 1 request per second using token-bucket or time-interval sleep.
-- Retries: built with exponential backoff on HTTP 429 and 5xx errors.
-- Mock fallback: if API key is invalid or unavailable, seamlessly serves verified fixtures from `tests/fixtures/`.
-
-### 6.3 Database Engine (`core/database.py`)
-- Context manager for connection and transaction lifecycle (`with db.transaction() as cur:`).
-- Automatic execution of DDL migrations upon boot.
-- Parameterized execution to defend against SQL injection.
