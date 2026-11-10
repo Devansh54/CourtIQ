@@ -14,21 +14,21 @@ The project combines API-based data collection, data validation and transformati
 
 CourtIQ is organised around three related areas of tennis data:
 
-### 1. Competitions and categories (Devansh — 50%)
+### 1. Competitions and categories 
 Explore competition metadata and how competitions are organised, including:
 - Competition names, categories, formats, and gender classifications.
 - Parent competitions and their sub-competition relationships.
 - Competition counts and format distributions across categories.
 - Filtering, searching, and execution of all 7 required analytical queries.
 
-### 2. Complexes and venues (Mansi — 25%)
+### 2. Complexes and venues 
 Explore tennis facilities and their location information, including:
 - Sports complexes and the venues associated with them.
 - Venue names, cities, and countries.
 - Country codes and time zones.
 - Venue counts by complex and country.
 
-### 3. Doubles competitor rankings (Nilakshi — 25%)
+### 3. Doubles competitor rankings 
 Explore doubles ranking information and competitor metadata, including:
 - Competitor names and countries.
 - Ranking positions and movement.
