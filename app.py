@@ -73,7 +73,7 @@ with col1:
 with col2:
     render_metric_card("Governing Categories", f"{total_categories:,}", "ATP, WTA, ITF, Grand Slam")
 with col3:
-    venue_sub = "Venues & Stadia" if venues_count > 0 else "Pending Venue Owner (25%)"
+    venue_sub = "Venues & Stadia" if venues_count > 0 else "Ready / Ingest Data"
     render_metric_card("Sports Venues", f"{venues_count:,}" if venues_count > 0 else "—", venue_sub)
 with col4:
     comp_sub = "Ranked Players" if competitors_count > 0 else "Pending Rankings Owner (25%)"
@@ -114,8 +114,8 @@ with m_col1:
 with m_col2:
     st.markdown("""
     ### 🏟️ 2. Complexes & Venues
-    **Owner:** Venue & Complexes Module Owner (25%)  
-    **Status:** `READY FOR IMPLEMENTATION`  
+    **Owner:** Venue & Complexes Module Owner (Mansi — 25%)  
+    **Status:** `ACTIVE / FULLY IMPLEMENTED`  
     
     Geographic mapping of global sports complexes, arenas, timezones, and venue infrastructure.
     """)
@@ -124,7 +124,7 @@ with m_col2:
 with m_col3:
     st.markdown("""
     ### 🥇 3. Doubles Competitor Rankings
-    **Owner:** Rankings & Analytics Module Owner (25%)  
+    **Owner:** Rankings & Analytics Module Owner (Nilakshi — 25%)  
     **Status:** `READY FOR IMPLEMENTATION`  
     
     Weekly world doubles standings, movement metrics, country dominance, and player profiles.

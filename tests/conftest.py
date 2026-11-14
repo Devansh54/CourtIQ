@@ -76,6 +76,10 @@ def postgres_test_db() -> Generator[DatabaseManager, None, None]:
         yield db_mgr
     finally:
         try:
+            db_mgr.execute("DELETE FROM competitor_rankings;")
+            db_mgr.execute("DELETE FROM competitors;")
+            db_mgr.execute("DELETE FROM venues;")
+            db_mgr.execute("DELETE FROM complexes;")
             db_mgr.execute("DELETE FROM competitions;")
             db_mgr.execute("DELETE FROM categories;")
         except Exception:
@@ -101,6 +105,10 @@ def test_db(tmp_path: Path) -> Generator[DatabaseManager, None, None]:
             yield db_mgr
         finally:
             try:
+                db_mgr.execute("DELETE FROM competitor_rankings;")
+                db_mgr.execute("DELETE FROM competitors;")
+                db_mgr.execute("DELETE FROM venues;")
+                db_mgr.execute("DELETE FROM complexes;")
                 db_mgr.execute("DELETE FROM competitions;")
                 db_mgr.execute("DELETE FROM categories;")
             except Exception:

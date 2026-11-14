@@ -1,4 +1,4 @@
-﻿
+
 -- Q7: Find venues belonging to a specific complex.
 -- Example parameter: complex_pattern = '%Nacional%'
 
@@ -14,7 +14,7 @@ SELECT
 FROM complexes AS c
 INNER JOIN venues AS v
     ON c.complex_id = v.complex_id
-WHERE c.complex_name ILIKE :complex_pattern
+WHERE LOWER(c.complex_name) LIKE LOWER(:complex_pattern)
 ORDER BY
     c.complex_name,
     v.venue_name;
