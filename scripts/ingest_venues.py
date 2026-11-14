@@ -1,4 +1,4 @@
-﻿
+
 #!/usr/bin/env python
 """CourtIQ Venues Ingestion Executable CLI Script.
 

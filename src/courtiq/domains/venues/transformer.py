@@ -1,4 +1,4 @@
-﻿"""CourtIQ Venues Transformer."""
+"""CourtIQ Venues Transformer."""
 
 from typing import Any, Dict, List, Tuple
 

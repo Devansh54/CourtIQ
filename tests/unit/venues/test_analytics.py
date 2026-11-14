@@ -1,4 +1,4 @@
-﻿
+
 import pandas as pd
 import pytest
 import plotly.graph_objects as go

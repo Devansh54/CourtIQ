@@ -1,4 +1,4 @@
-﻿
+
 """Unit tests for Venues and Complexes Pydantic schemas."""
 
 import pytest

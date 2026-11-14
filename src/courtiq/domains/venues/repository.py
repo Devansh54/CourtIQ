@@ -1,4 +1,4 @@
-﻿"""CourtIQ Venues Repository."""
+"""CourtIQ Venues Repository."""
 
 from typing import List, Optional
 

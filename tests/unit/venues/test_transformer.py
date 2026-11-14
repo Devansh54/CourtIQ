@@ -1,4 +1,4 @@
-﻿
+
 from courtiq.domains.venues.extractor import VenuesExtractor
 from courtiq.domains.venues.transformer import VenuesTransformer
 
