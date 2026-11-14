@@ -1,4 +1,4 @@
-﻿
+
 -- Q4: Display all venues with their respective timezones.
 
 SELECT

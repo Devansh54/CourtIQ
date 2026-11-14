@@ -1,4 +1,4 @@
-﻿
+
 -- Q3: Display venues belonging to a specific country.
 -- Example parameter: country_name = 'Chile'
 

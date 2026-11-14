@@ -1,4 +1,4 @@
-﻿
+
 -- Q7: Find venues belonging to a specific complex.
 -- Example parameter: complex_pattern = '%Nacional%'
 

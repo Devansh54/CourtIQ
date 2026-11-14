@@ -1,4 +1,4 @@
-﻿
+
 -- Q5: Find complexes containing more than one venue.
 
 SELECT

@@ -1,4 +1,4 @@
-﻿
+
 -- Q6: Group venues by country and count them.
 
 SELECT

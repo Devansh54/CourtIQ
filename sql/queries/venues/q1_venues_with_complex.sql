@@ -1,4 +1,4 @@
-﻿
+
 -- Q1: Display all venues with their associated complex names.
 
 SELECT

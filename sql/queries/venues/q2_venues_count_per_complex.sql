@@ -1,4 +1,4 @@
-﻿
+
 -- Q2: Count the number of venues in each complex.
 
 SELECT

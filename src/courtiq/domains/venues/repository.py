@@ -28,7 +28,7 @@ class VenuesRepository:
         path = self.queries_dir / filename
         if not path.exists():
             raise FileNotFoundError(f"SQL file not found: {path}")
-        return path.read_text(encoding="utf-8")
+        return path.read_text(encoding="utf-8-sig").strip()
 
     def save_complexes(self, complexes: List[Complex]) -> int:
         if not complexes:
