@@ -1,8 +1,8 @@
 # CourtIQ — Project Implementation Status & Tracking
 
 **Product Name:** CourtIQ – Tennis Data & Analytics Explorer  
-**Last Updated:** 2026-11-07  
-**Current Milestone:** Milestone 1 & PostgreSQL 18 Foundation Completed (Devansh — 50%) | Ready for Milestone 2  
+**Last Updated:** 2026-11-14  
+**Current Milestone:** Milestone 1 & 2 Completed (Devansh 50% + Mansi 25% = 75%) | Ready for Milestone 3 (Nilakshi — 25%)  
 **Lead Architect:** Devansh  
 **Active Database Engine:** PostgreSQL 18 (via SQLAlchemy 2.x Core & Psycopg 3; SQLite retained for test fallback)  
 
@@ -12,10 +12,10 @@
 
 | Contributor & Ownership | Planned Units | Completed Units | Progress (%) | Status |
 |---|:---:|:---:|:---:|:---:|
-| **Devansh** (Architecture, PostgreSQL Foundation, Competitions) | 50 | 50 | **100%** | **Completed & Verified** |
-| **Mansi** (Complexes & Venues Module) | 25 | 0 | **0%** | Ready for Handoff 1 |
-| **Nilakshi** (Doubles Rankings & Release Verification) | 25 | 0 | **0%** | Scheduled for Handoff 2 |
-| **Total Product Workload** | **100** | **50** | **50%** | **Foundation Milestone Complete** |
+| **Devansh** (Architecture, PostgreSQL Foundation, Competitions) | 50 | 50 | **100%** | **Completed & Merged** (PR #1, PR #2) |
+| **Mansi** (Complexes & Venues Module) | 25 | 25 | **100%** | **Completed & Merged** (PR #3, PR #4) |
+| **Nilakshi** (Doubles Rankings & Release Verification) | 25 | 0 | **0%** | Ready for Handoff 2 |
+| **Total Product Workload** | **100** | **75** | **75%** | **Venues Milestone Complete** |
 
 ---
 
@@ -82,38 +82,60 @@
 
 ---
 
-## 3. Outstanding Work for Subsequent Contributors
+## 3. Mansi's Completed Implementation Checklist (25 / 25 Units)
 
-### Milestone 2: Complexes & Venues (25 Effort Units)
-- **Assignee:** Mansi (Venue & Complexes Module Owner)
-- **Status:** Ready to begin immediately.
-- **Target Deliverables:**
-  - Alembic migration `alembic/versions/0002_venues.py`
-  - Venues extractor, transformer, repository, analytics
-  - 7 SQL queries in `sql/queries/venues/` using named parameters
-  - `pages/2_Venues.py`
-  - Unit and integration tests in `tests/unit/venues/`
+### A. Database Migrations & Schemas (6 Units)
+- [x] Authored Alembic migration `alembic/versions/0002_venues.py` creating `complexes` and `venues` tables with foreign keys and performance indexes.
+- [x] Defined Pydantic schemas in `src/courtiq/domains/venues/schemas.py` for `Complex` and `Venue` with validation and string trimming.
 
-### Milestone 3: Doubles Competitor Rankings & Integration (25 Effort Units)
-- **Assignee:** Nilakshi (Rankings & Analytics Module Owner & Release Lead)
-- **Status:** Scheduled following completion of Milestone 2.
-- **Target Deliverables:**
-  - Alembic migration `alembic/versions/0003_rankings.py`
-  - Rankings extractor, transformer, repository, analytics
-  - 6 SQL queries in `sql/queries/rankings/` using named parameters
-  - `pages/3_Rankings.py`
-  - Unit tests in `tests/unit/rankings/`
-  - Final integration, end-to-end regression testing, and release verification
+### B. Extraction & Transformation Pipeline (6 Units)
+- [x] Implemented `VenuesExtractor` in `src/courtiq/domains/venues/extractor.py` retrieving `complexes.json` with payload validation.
+- [x] Implemented `VenuesTransformer` in `src/courtiq/domains/venues/transformer.py` transforming nested complexes and venues into validated model lists.
+
+### C. Repository & Analytical SQL Queries (7 Units)
+- [x] Built `VenuesRepository` in `src/courtiq/domains/venues/repository.py` with idempotent PostgreSQL upserts (`ON CONFLICT DO UPDATE`).
+- [x] Implemented all 7 required analytical SQL queries in `sql/queries/venues/`:
+  - `q1_venues_with_complex.sql`: Venues with complex details.
+  - `q2_venues_count_per_complex.sql`: Aggregated venue count per complex.
+  - `q3_venues_by_country.sql`: Venues filtered by country parameter.
+  - `q4_venues_and_timezones.sql`: Venues mapped to timezones.
+  - `q5_multi_venue_complexes.sql`: Complexes containing more than one venue.
+  - `q6_venues_by_country_group.sql`: Venues grouped by country.
+  - `q7_venues_for_specific_complex.sql`: Specific complex search with ANSI-compliant pattern matching.
+- [x] Implemented domain analytics service `src/courtiq/domains/venues/analytics.py` generating summary KPIs and Plotly charts.
+
+### D. Ingestion, UI & Test Suite (6 Units)
+- [x] Integrated `ingest_venues()` into `src/courtiq/ingestion/runner.py` and created executable CLI `scripts/ingest_venues.py`.
+- [x] Built interactive Streamlit dashboard `pages/2_Venues.py` with KPI cards, Plotly charts, interactive filters, CSV export, complex drilldown, and SQL Query Execution Center.
+- [x] Delivered 38 unit tests in `tests/unit/venues/` covering schemas, extractor, transformer, repository, and analytics.
+- [x] Created end-to-end integration test `tests/integration/test_venues_pipeline.py`.
 
 ---
 
-## 4. Current Git State & Verification
+## 4. Outstanding Work for Subsequent Contributors
+
+### Milestone 3: Doubles Competitor Rankings & Integration (25 Effort Units)
+- **Assignee:** Nilakshi (Rankings & Analytics Module Owner & Release Lead)
+- **Status:** Ready to begin immediately.
+- **Handoff Directive:** Detailed master instructions provided in `docs/handoffs/RANKINGS_MODULE_HANDOFF.md`.
+- **Target Deliverables:**
+  - Rankings domain extractor, transformer, repository, and analytics (`src/courtiq/domains/rankings/`)
+  - All 6 mandated SQL queries in `sql/queries/rankings/`
+  - Ingestion runner integration (`ingest_rankings()`) and CLI `scripts/ingest_rankings.py`
+  - Interactive Streamlit Rankings Explorer (`pages/3_Rankings.py`)
+  - Unit and integration tests in `tests/unit/rankings/` and `tests/integration/test_rankings_pipeline.py`
+  - Final cross-domain integration, system regression, and product sign-off
+
+---
+
+## 5. Current Git State & Verification
 
 - **Base Integration Branch:** `devansh-foundation-competitions`
-- **PR #1 (PostgreSQL Database Migration):** Merged into `devansh-foundation-competitions` (commit `19a4c95`).
-- **PR #2 (Pre-Handoff Corrections & Audit):** Open and awaiting review on source branch `fix/api-mode-and-pre-handoff-audit`.
 - **Active Database Engine:** PostgreSQL 18 (`postgres:18-alpine` via Docker Compose).
-- **Verified Test Suite:** 31 of 31 tests passing (100% pass rate in pytest).
-- **Alembic Revision:** `0001_initial_competitions` applied to main database.
-- **Main Database Counts:** 5 categories, 19 competitions verified.
-- **SQLite Data State:** Preserved safely at `data/courtiq.db` (legacy migration source / offline testing fallback).
+- **Verified PRs Merged:**
+  - PR #1: PostgreSQL Database Migration (Devansh) — Merged
+  - PR #2: LIVE/DEMO API Enforcement & Audit (Devansh) — Merged
+  - PR #3: Venues & Rankings Baseline Migrations (Mansi) — Merged
+  - PR #4: Complete Venues & Complexes Module (Mansi) — Merged
+- **CI / Build Status:** Green / Passing on GitHub Actions.
+- **Total Test Suite:** 70 tests collected across core, competitions, venues, and concurrency.
