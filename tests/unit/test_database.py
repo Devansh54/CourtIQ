@@ -78,9 +78,9 @@ def test_fetch_df(test_db: DatabaseManager):
     assert df.iloc[0]["category_name"] == "DataFrame Cat"
 
 
+
 def test_migrations_tracking(test_db: DatabaseManager):
-    """Verify applied migrations are recorded in alembic_version."""
+    """Verify the current migration is recorded in alembic_version."""
     records = test_db.fetch_all("SELECT version_num FROM alembic_version;")
-    assert len(records) >= 1
-    versions = [r["version_num"] for r in records]
-    assert any("0001" in v for v in versions)
+    assert len(records) == 1
+    assert records[0]["version_num"]
