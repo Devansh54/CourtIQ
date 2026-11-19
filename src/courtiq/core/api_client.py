@@ -2,7 +2,7 @@
 
 Handles HTTP communication with the Sportradar Tennis API (v3) with
 strict rate limiting, exponential backoff retries, custom exception mapping,
-and automatic fallback to verified test fixtures in offline mode.
+and synthetic demonstration fixture loading in DEMO mode.
 """
 
 import json
@@ -10,8 +10,6 @@ import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util import Retry
 
 from courtiq.core.config import Settings, get_settings
 from courtiq.core.exceptions import (
@@ -46,7 +44,7 @@ class SportradarClient:
         self.session = self._create_session()
 
     def _create_session(self) -> requests.Session:
-        """Create and configure requests Session with standard connection pooling."""
+        """Create and configure requests Session with standard headers."""
         session = requests.Session()
         session.headers.update({
             "Accept": "application/json",
@@ -65,7 +63,7 @@ class SportradarClient:
         self._last_request_time = time.time()
 
     def _load_fixture_fallback(self, endpoint: str) -> Dict[str, Any]:
-        """Load synthetic fixture when in mock mode or when network is unavailable."""
+        """Load synthetic fixture for DEMO mode. Clearly logs and identifies synthetic data."""
         fixture_map = {
             "competitions": "competitions_sample.json",
             "complexes": "complexes_sample.json",
@@ -85,27 +83,60 @@ class SportradarClient:
         fixture_path = self.settings.fixtures_dir / matched_file
         if not fixture_path.exists():
             raise ResourceNotFoundError(
-                f"Mock fixture not found at {fixture_path} for endpoint {endpoint}"
+                f"Synthetic fixture not found at {fixture_path} for endpoint {endpoint}"
             )
 
-        logger.info("Operating in Offline/Mock mode. Serving fixture from: %s", fixture_path.name)
+        logger.info(
+            "[DEMO MODE] Loading synthetic demonstration fixture from '%s' for endpoint '%s'",
+            fixture_path.name,
+            endpoint,
+        )
         with open(fixture_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+
+        if isinstance(data, dict):
+            # Annotate top-level metadata identifying data as synthetic demonstration
+            data.setdefault("_synthetic", True)
+            data.setdefault("_source", f"fixture:{fixture_path.name}")
+
+        return data
 
     def get(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Execute GET request against Sportradar API with retries and rate limiting.
+
+        In DEMO mode:
+            Loads synthetic test fixtures without making external network calls.
+
+        In LIVE mode:
+            Requires a valid SPORTRADAR_API_KEY. Makes real network requests against
+            the Sportradar API. NEVER falls back to synthetic fixtures on failure.
+            Raises AuthenticationError, RateLimitError, or APIError.
 
         Args:
             endpoint: API endpoint path (e.g., 'competitions.json' or '/competitions.json').
             params: Optional query parameters.
 
         Returns:
-            Parsed JSON dictionary from API response or mock fixture.
+            Parsed JSON dictionary from API response or synthetic fixture.
+
+        Raises:
+            AuthenticationError: Missing/placeholder API key or HTTP 401/403.
+            RateLimitError: HTTP 429 when max retries are exhausted.
+            ResourceNotFoundError: HTTP 404 resource not found or fixture missing.
+            APIError: HTTP 5xx, unexpected response, or network failure after max retries.
         """
-        # If in mock mode or API key is not configured, fallback to fixture
-        if self.settings.is_mock_mode:
-            logger.info("Mock mode active (no valid API key configured). Using synthetic fixtures.")
+        # DEMO Mode: explicitly load synthetic fixture without network calls
+        if self.settings.is_demo_mode:
+            logger.info("DEMO mode active. Serving synthetic demonstration fixture.")
             return self._load_fixture_fallback(endpoint)
+
+        # LIVE Mode: Validate API key before attempting request
+        if not self.settings.has_valid_api_key:
+            logger.error("LIVE mode active but SPORTRADAR_API_KEY is missing or set to placeholder.")
+            raise AuthenticationError(
+                "Sportradar API key is missing or set to a placeholder in LIVE mode. "
+                "Configure a valid SPORTRADAR_API_KEY in .env or switch to COURTIQ_MODE=DEMO."
+            )
 
         clean_endpoint = endpoint.lstrip("/")
         if not clean_endpoint.endswith(f".{self.settings.sportradar_format}"):
@@ -123,7 +154,7 @@ class SportradarClient:
             self._enforce_rate_limit()
 
             try:
-                logger.debug("Dispatching API GET to %s (attempt %d/%d)", url, attempt, self.max_retries)
+                logger.debug("Dispatching API GET to endpoint '%s' (attempt %d/%d)", clean_endpoint, attempt, self.max_retries)
                 response = self.session.get(url, params=query_params, timeout=self.timeout)
 
                 if response.status_code == 200:
@@ -132,11 +163,11 @@ class SportradarClient:
                 if response.status_code in (401, 403):
                     logger.error("Sportradar API authentication rejected with status %d", response.status_code)
                     raise AuthenticationError(
-                        f"Authentication failed ({response.status_code}): Check SPORTRADAR_API_KEY in .env"
+                        f"Sportradar API authentication failed ({response.status_code}): Check SPORTRADAR_API_KEY in .env"
                     )
 
                 if response.status_code == 404:
-                    logger.error("Endpoint %s not found (404)", url)
+                    logger.error("Endpoint '%s' not found (404)", clean_endpoint)
                     raise ResourceNotFoundError(clean_endpoint)
 
                 if response.status_code == 429:
@@ -150,24 +181,35 @@ class SportradarClient:
                 if response.status_code >= 500:
                     logger.warning("Server error %d on attempt %d. Backing off for %.2fs", response.status_code, attempt, backoff)
                     if attempt >= self.max_retries:
-                        raise APIError(f"Sportradar server error {response.status_code}", status_code=response.status_code)
+                        raise APIError(
+                            f"Sportradar server error {response.status_code} after {self.max_retries} attempts.",
+                            status_code=response.status_code,
+                        )
                     time.sleep(backoff)
                     backoff *= 2
                     continue
 
-                # Any other unexpected status
+                # Any other unexpected status - do not expose raw response.text which may echo query parameters
+                logger.error("Unexpected Sportradar API status %d received for endpoint '%s'", response.status_code, clean_endpoint)
                 raise APIError(
-                    f"Unexpected API response {response.status_code}: {response.text}",
+                    f"Unexpected Sportradar API status {response.status_code}",
                     status_code=response.status_code,
                 )
 
-            except (requests.ConnectionError, requests.Timeout) as e:
-                logger.warning("Network connection error on attempt %d/%d: %s", attempt, self.max_retries, e)
+            except requests.RequestException as e:
+                exc_type = type(e).__name__
+                logger.warning(
+                    "Network error (%s) on attempt %d/%d for endpoint '%s'",
+                    exc_type,
+                    attempt,
+                    self.max_retries,
+                    clean_endpoint,
+                )
                 if attempt >= self.max_retries:
-                    logger.info("Falling back to synthetic fixture due to network/host unreachable.")
-                    return self._load_fixture_fallback(endpoint)
+                    raise APIError(
+                        f"Sportradar API request to '{clean_endpoint}' failed after {self.max_retries} retries."
+                    ) from None
                 time.sleep(backoff)
                 backoff *= 2
 
-        # Final fallback if loop ends without return
-        return self._load_fixture_fallback(endpoint)
+        raise APIError(f"Sportradar API request to '{clean_endpoint}' failed after {self.max_retries} attempts.")

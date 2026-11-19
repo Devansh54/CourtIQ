@@ -1,0 +1,36 @@
+# ==============================================================================
+# CourtIQ: Master Docker Compose Infrastructure
+# PostgreSQL 18 Primary Relational Database with Localhost Isolation
+# ==============================================================================
+
+services:
+  db:
+    image: postgres:18-alpine
+    container_name: courtiq_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-courtiq}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?Set POSTGRES_SUPERUSER_PASSWORD in .env}
+      PGDATA: /var/lib/postgresql/18/docker
+      COURTIQ_MIGRATOR_PASSWORD: ${COURTIQ_MIGRATOR_PASSWORD:?Set COURTIQ_MIGRATOR_PASSWORD in .env}
+      COURTIQ_APP_PASSWORD: ${COURTIQ_APP_PASSWORD:?Set COURTIQ_APP_PASSWORD in .env}
+    ports:
+      # Bound strictly to localhost (127.0.0.1) to prevent external exposure
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # Persistent named volume mounted to /var/lib/postgresql
+      # Covers PostgreSQL 18 version-specific PGDATA (/var/lib/postgresql/18/docker)
+      - postgres_data:/var/lib/postgresql
+      # Automated role provisioning and permission grant script
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d courtiq" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgres_data:
+    name: courtiq_postgres_data

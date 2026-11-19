@@ -73,10 +73,10 @@ with col1:
 with col2:
     render_metric_card("Governing Categories", f"{total_categories:,}", "ATP, WTA, ITF, Grand Slam")
 with col3:
-    venue_sub = "Venues & Stadia" if venues_count > 0 else "Pending Venue Owner (25%)"
+    venue_sub = "Venues & Stadia" if venues_count > 0 else "Ready / Ingest Data"
     render_metric_card("Sports Venues", f"{venues_count:,}" if venues_count > 0 else "—", venue_sub)
 with col4:
-    comp_sub = "Ranked Players" if competitors_count > 0 else "Pending Rankings Owner (25%)"
+    comp_sub = "Ranked Players" if competitors_count > 0 else "Ready / Ingest Data"
     render_metric_card("Doubles Competitors", f"{competitors_count:,}" if competitors_count > 0 else "—", comp_sub)
 
 # ------------------------------------------------------------------------------
@@ -114,8 +114,8 @@ with m_col1:
 with m_col2:
     st.markdown("""
     ### 🏟️ 2. Complexes & Venues
-    **Owner:** Venue & Complexes Module Owner (25%)  
-    **Status:** `READY FOR IMPLEMENTATION`  
+    **Owner:** Venue & Complexes Module Owner (Mansi — 25%)  
+    **Status:** `ACTIVE / FULLY IMPLEMENTED`  
     
     Geographic mapping of global sports complexes, arenas, timezones, and venue infrastructure.
     """)
@@ -124,8 +124,8 @@ with m_col2:
 with m_col3:
     st.markdown("""
     ### 🥇 3. Doubles Competitor Rankings
-    **Owner:** Rankings & Analytics Module Owner (25%)  
-    **Status:** `READY FOR IMPLEMENTATION`  
+    **Owner:** Rankings & Analytics Module Owner (Nilakshi — 25%)  
+    **Status:** `ACTIVE / FULLY IMPLEMENTED`  
     
     Weekly world doubles standings, movement metrics, country dominance, and player profiles.
     """)
@@ -140,10 +140,15 @@ env_col1, env_col2 = st.columns(2)
 
 with env_col1:
     st.markdown("#### Runtime Configuration")
-    mode_text = "Synthetic Mock Fixture Mode (Offline)" if settings.is_mock_mode else "Sportradar Live API Mode"
-    st.markdown(f"- **Operating Mode:** `{mode_text}`")
-    st.markdown(f"- **Relational Database:** `SQLite (ANSI SQL Compatible)`")
-    st.markdown(f"- **Database Path:** `{settings.courtiq_db_path}`")
+    mode_text = "Synthetic Mock / Demo Mode" if settings.is_demo_mode else "Sportradar Live API Mode"
+    db_target = "PostgreSQL 18 (Primary Production Engine)" if settings.is_postgres else "SQLite (Fallback / Local Testing)"
+    st.markdown(f"- **Operating Mode:** `{settings.courtiq_mode}` ({mode_text})")
+    st.markdown(f"- **Relational Database:** `{db_target}`")
+    st.markdown(f"- **Database Dialect:** `{settings.db_dialect}`")
+    if settings.is_postgres:
+        st.markdown(f"- **Pool Configuration:** `size={settings.db_pool_size}, max_overflow={settings.db_pool_max_overflow}, timeout={settings.db_pool_timeout}s`")
+    else:
+        st.markdown(f"- **Database Path:** `{settings.courtiq_db_path}`")
     st.markdown(f"- **API Base Endpoint:** `{settings.sportradar_base_url}`")
     st.markdown(f"- **Rate Limit Safety:** `{settings.sportradar_rate_limit_rps} RPS`")
 

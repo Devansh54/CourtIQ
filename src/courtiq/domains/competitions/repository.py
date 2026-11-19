@@ -40,7 +40,7 @@ class CompetitionsRepository:
     # --------------------------------------------------------------------------
 
     def save_categories(self, categories: List[Category]) -> int:
-        """Persist a list of categories using idempotent INSERT OR REPLACE.
+        """Persist a list of categories using idempotent INSERT ON CONFLICT DO UPDATE.
 
         Args:
             categories: List of validated Category entities.
@@ -52,15 +52,20 @@ class CompetitionsRepository:
             return 0
 
         query = """
-            INSERT OR REPLACE INTO categories (category_id, category_name)
-            VALUES (?, ?);
+            INSERT INTO categories (category_id, category_name)
+            VALUES (:category_id, :category_name)
+            ON CONFLICT (category_id) DO UPDATE SET
+                category_name = EXCLUDED.category_name;
         """
-        params = [(cat.category_id, cat.category_name) for cat in categories]
+        params = [
+            {"category_id": cat.category_id, "category_name": cat.category_name}
+            for cat in categories
+        ]
         logger.info("Persisting %d categories to database.", len(categories))
         return self.db.execute_many(query, params)
 
     def save_competitions(self, competitions: List[Competition]) -> int:
-        """Persist a list of competitions using idempotent INSERT OR REPLACE.
+        """Persist a list of competitions using idempotent INSERT ON CONFLICT DO UPDATE.
 
         Args:
             competitions: List of validated Competition entities.
@@ -78,20 +83,28 @@ class CompetitionsRepository:
         ordered_competitions = parents + children
 
         query = """
-            INSERT OR REPLACE INTO competitions (
+            INSERT INTO competitions (
                 competition_id, competition_name, parent_id, type, gender, category_id
             )
-            VALUES (?, ?, ?, ?, ?, ?);
+            VALUES (
+                :competition_id, :competition_name, :parent_id, :type, :gender, :category_id
+            )
+            ON CONFLICT (competition_id) DO UPDATE SET
+                competition_name = EXCLUDED.competition_name,
+                parent_id = EXCLUDED.parent_id,
+                type = EXCLUDED.type,
+                gender = EXCLUDED.gender,
+                category_id = EXCLUDED.category_id;
         """
         params = [
-            (
-                c.competition_id,
-                c.competition_name,
-                c.parent_id,
-                c.type,
-                c.gender,
-                c.category_id,
-            )
+            {
+                "competition_id": c.competition_id,
+                "competition_name": c.competition_name,
+                "parent_id": c.parent_id,
+                "type": c.type,
+                "gender": c.gender,
+                "category_id": c.category_id,
+            }
             for c in ordered_competitions
         ]
         logger.info("Persisting %d competitions to database (%d parents, %d sub-competitions).",
@@ -142,7 +155,7 @@ class CompetitionsRepository:
             category_target: Category name (e.g. 'ITF Men') or ID.
         """
         sql = self._read_query("q4_by_specific_category.sql")
-        return self.db.fetch_df(sql, params=(category_target, category_target))
+        return self.db.fetch_df(sql, params={"category_target": category_target})
 
     def query_5_parent_sub_hierarchy(self) -> pd.DataFrame:
         """Execute Query 5: Identify parent competitions and their sub-competitions."""
@@ -186,24 +199,23 @@ class CompetitionsRepository:
             LEFT JOIN competitions p ON c.parent_id = p.competition_id
             WHERE 1=1
         """
-        params: List[Any] = []
+        params: Dict[str, Any] = {}
 
         if search_query and search_query.strip():
-            base_sql += " AND (LOWER(c.competition_name) LIKE ? OR LOWER(cat.category_name) LIKE ?)"
-            term = f"%{search_query.strip().lower()}%"
-            params.extend([term, term])
+            base_sql += " AND (LOWER(c.competition_name) LIKE :search_kw OR LOWER(cat.category_name) LIKE :search_kw)"
+            params["search_kw"] = f"%{search_query.strip().lower()}%"
 
         if category_id and category_id != "All":
-            base_sql += " AND c.category_id = ?"
-            params.append(category_id)
+            base_sql += " AND c.category_id = :category_id"
+            params["category_id"] = category_id
 
         if comp_type and comp_type != "All":
-            base_sql += " AND LOWER(c.type) = LOWER(?)"
-            params.append(comp_type)
+            base_sql += " AND LOWER(c.type) = LOWER(:comp_type)"
+            params["comp_type"] = comp_type
 
         if gender and gender != "All":
-            base_sql += " AND LOWER(c.gender) = LOWER(?)"
-            params.append(gender)
+            base_sql += " AND LOWER(c.gender) = LOWER(:gender)"
+            params["gender"] = gender
 
         base_sql += " ORDER BY cat.category_name ASC, c.competition_name ASC;"
         return self.db.fetch_df(base_sql, params=params)

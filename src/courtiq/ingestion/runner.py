@@ -12,6 +12,12 @@ from courtiq.core.logging_config import get_logger
 from courtiq.domains.competitions.extractor import CompetitionsExtractor
 from courtiq.domains.competitions.transformer import CompetitionsTransformer
 from courtiq.domains.competitions.repository import CompetitionsRepository
+from courtiq.domains.venues.extractor import VenuesExtractor
+from courtiq.domains.venues.transformer import VenuesTransformer
+from courtiq.domains.venues.repository import VenuesRepository
+from courtiq.domains.rankings.extractor import RankingsExtractor
+from courtiq.domains.rankings.transformer import RankingsTransformer
+from courtiq.domains.rankings.repository import RankingsRepository
 
 logger = get_logger("ingestion.runner")
 
@@ -100,4 +106,113 @@ class IngestionRunner:
                 status="FAILED",
                 errors=1,
                 message=str(e),
+            )
+
+    def ingest_venues(
+        self,
+        extractor: Optional[VenuesExtractor] = None,
+        transformer: Optional[VenuesTransformer] = None,
+        repository: Optional[VenuesRepository] = None,
+    ) -> IngestionResult:
+        """Execute the Venues ingestion pipeline."""
+
+        logger.info("Starting Venues ingestion pipeline")
+
+        try:
+            self.run_migrations_if_needed()
+
+            ext = extractor or VenuesExtractor()
+            trans = transformer or VenuesTransformer()
+            repo = repository or VenuesRepository(self.db)
+
+            raw_payload = ext.extract()
+
+            complexes, venues = trans.transform(raw_payload)
+
+            saved_complexes = repo.save_complexes(complexes)
+            saved_venues = repo.save_venues(venues)
+
+            total = saved_complexes + saved_venues
+
+            logger.info(
+                "Venues ingestion successful: %d complexes, %d venues",
+                saved_complexes,
+                saved_venues,
+            )
+
+            return IngestionResult(
+                domain="venues",
+                status="SUCCESS",
+                records_ingested=total,
+                message=(
+                    f"Successfully saved {saved_complexes} complexes "
+                    f"and {saved_venues} venues."
+                ),
+            )
+
+        except Exception as e:
+            logger.error(
+                "Venues ingestion failed: %s",
+                e,
+                exc_info=True,
+            )
+
+            return IngestionResult(
+                domain="venues",
+                status="FAILED",
+                errors=1,
+                message=str(e),
+            )
+
+    def ingest_rankings(
+        self,
+        extractor: Optional[RankingsExtractor] = None,
+        transformer: Optional[RankingsTransformer] = None,
+        repository: Optional[RankingsRepository] = None,
+    ) -> IngestionResult:
+        """Execute the Doubles Competitor Rankings ingestion pipeline."""
+
+        try:
+            self.run_migrations_if_needed()
+
+            ext = extractor or RankingsExtractor()
+            trans = transformer or RankingsTransformer()
+            repo = repository or RankingsRepository(self.db)
+
+            raw_payload = ext.extract()
+            competitors, rankings = trans.transform(raw_payload)
+
+            saved_competitors = repo.save_competitors(competitors)
+            saved_rankings = repo.save_rankings(rankings)
+
+            total_records = saved_competitors + saved_rankings
+
+            logger.info(
+                "Rankings ingestion successful: %d competitors and %d rankings",
+                saved_competitors,
+                saved_rankings,
+            )
+
+            return IngestionResult(
+                domain="rankings",
+                status="SUCCESS",
+                records_ingested=total_records,
+                message=(
+                    f"Successfully saved {saved_competitors} competitors "
+                    f"and {saved_rankings} rankings."
+                ),
+            )
+
+        except Exception as exc:
+            logger.error(
+                "Rankings ingestion failed: %s",
+                exc,
+                exc_info=True,
+            )
+
+            return IngestionResult(
+                domain="rankings",
+                status="FAILED",
+                errors=1,
+                message=str(exc),
             )
