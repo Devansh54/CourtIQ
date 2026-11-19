@@ -76,7 +76,7 @@ with col3:
     venue_sub = "Venues & Stadia" if venues_count > 0 else "Ready / Ingest Data"
     render_metric_card("Sports Venues", f"{venues_count:,}" if venues_count > 0 else "—", venue_sub)
 with col4:
-    comp_sub = "Ranked Players" if competitors_count > 0 else "Pending Rankings Owner (25%)"
+    comp_sub = "Ranked Players" if competitors_count > 0 else "Ready / Ingest Data"
     render_metric_card("Doubles Competitors", f"{competitors_count:,}" if competitors_count > 0 else "—", comp_sub)
 
 # ------------------------------------------------------------------------------
@@ -125,7 +125,7 @@ with m_col3:
     st.markdown("""
     ### 🥇 3. Doubles Competitor Rankings
     **Owner:** Rankings & Analytics Module Owner (Nilakshi — 25%)  
-    **Status:** `READY FOR IMPLEMENTATION`  
+    **Status:** `ACTIVE / FULLY IMPLEMENTED`  
     
     Weekly world doubles standings, movement metrics, country dominance, and player profiles.
     """)
