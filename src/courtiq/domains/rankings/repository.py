@@ -114,11 +114,54 @@ class RankingsRepository:
         )
         return int(result["total"]) if result else 0
 
-    def query_1_competitors_rank_points(self) -> pd.DataFrame:
-        """Return the top-ranked competitors."""
+    def query_1_top_ranked_competitors(self) -> pd.DataFrame:
+        """Return the top-ranked competitors (Query 1)."""
         return self.db.fetch_df(
             self._read_query("q1_top_ranked_competitors.sql")
         )
+
+    def query_2_rankings_by_country(
+        self, country: str = "Croatia"
+    ) -> pd.DataFrame:
+        """Return rankings for competitors from a selected country (Query 2)."""
+        query = self._read_query("q2_rankings_by_country.sql")
+        return self.db.fetch_df(
+            query,
+            params={"country_name": country}
+        )
+
+    def query_3_rank_movement_gainers(self) -> pd.DataFrame:
+        """Return competitors with positive rank movement (Query 3)."""
+        return self.db.fetch_df(
+            self._read_query("q3_rank_movement_gainers.sql")
+        )
+
+    def query_4_competitions_played_vs_points(self) -> pd.DataFrame:
+        """Return competitions played compared against total points (Query 4)."""
+        return self.db.fetch_df(
+            self._read_query("q4_competitions_played_vs_points.sql")
+        )
+
+    def query_5_unranked_or_zero_movement(self) -> pd.DataFrame:
+        """Return competitors with zero rank movement (Query 5)."""
+        return self.db.fetch_df(
+            self._read_query(
+                "q5_unranked_or_zero_movement_competitors.sql"
+            )
+        )
+
+    def query_6_points_distribution_by_country(self) -> pd.DataFrame:
+        """Return aggregated points and competitor counts grouped by country (Query 6)."""
+        return self.db.fetch_df(
+            self._read_query("q6_points_distribution_by_country.sql")
+        )
+
+    # --------------------------------------------------------------------------
+    # Backward-compatible convenience aliases
+    # --------------------------------------------------------------------------
+    def query_1_competitors_rank_points(self) -> pd.DataFrame:
+        """Alias for query_1_top_ranked_competitors."""
+        return self.query_1_top_ranked_competitors()
 
     def query_2_top_5_competitors(self) -> pd.DataFrame:
         """Return the top five competitors."""
@@ -127,22 +170,14 @@ class RankingsRepository:
         return self.db.fetch_df(query)
 
     def query_3_stable_rank_competitors(self) -> pd.DataFrame:
-        """Return competitors whose ranking movement is zero."""
-        return self.db.fetch_df(
-            self._read_query(
-                "q5_unranked_or_zero_movement_competitors.sql"
-            )
-        )
+        """Alias for query_5_unranked_or_zero_movement."""
+        return self.query_5_unranked_or_zero_movement()
 
     def query_4_points_by_country(
         self, country: str = "Croatia"
     ) -> pd.DataFrame:
-        """Return rankings for competitors from a selected country."""
-        query = self._read_query("q2_rankings_by_country.sql")
-        return self.db.fetch_df(
-            query,
-            params={"country_name": country}
-        )
+        """Alias for query_2_rankings_by_country."""
+        return self.query_2_rankings_by_country(country)
 
     def query_5_competitors_per_country(self) -> pd.DataFrame:
         """Return competitor counts grouped by country."""
