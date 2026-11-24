@@ -19,15 +19,52 @@ def apply_custom_css() -> None:
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
-        /* Hide Streamlit default Deploy button, toolbar, and footer */
-        [data-testid="stToolbar"] {
+        /* Hide Streamlit default Deploy button, toolbar, header and footer */
+        header[data-testid="stHeader"],
+        [data-testid="stHeader"],
+        [data-testid="stToolbar"],
+        [data-testid="stDecoration"],
+        [data-testid="stDeployButton"],
+        #MainMenu,
+        footer,
+        header {
             display: none !important;
-        }
-        header[data-testid="stHeader"] {
-            background: transparent !important;
-        }
-        footer {
             visibility: hidden !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .block-container {
+            padding-top: 1.5rem !important;
+            padding-bottom: 2.5rem !important;
+            max-width: 1440px !important;
+        }
+
+        /* Sidebar Modernization */
+        section[data-testid="stSidebar"] {
+            background: #090d16 !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.07) !important;
+        }
+        section[data-testid="stSidebar"] .block-container {
+            padding-top: 1.5rem !important;
+        }
+        [data-testid="stSidebarNavLink"] {
+            border-radius: 9px !important;
+            margin-bottom: 5px !important;
+            padding: 0.4rem 0.8rem !important;
+            font-weight: 500 !important;
+            transition: all 0.2s ease !important;
+        }
+        [data-testid="stSidebarNavLink"]:hover {
+            background: rgba(255, 255, 255, 0.06) !important;
+            color: #38bdf8 !important;
+        }
+        [data-testid="stSidebarNavLink"][aria-current="page"] {
+            background: linear-gradient(135deg, rgba(2, 132, 199, 0.25), rgba(37, 99, 235, 0.35)) !important;
+            border: 1px solid rgba(56, 189, 248, 0.45) !important;
+            color: #ffffff !important;
+            font-weight: 600 !important;
         }
 
         /* Top Hero Header Banner */

@@ -35,6 +35,11 @@ st.set_page_config(
 
 apply_custom_css()
 db = get_db()
+if not hasattr(db, "table_exists"):
+    import importlib
+    import courtiq.core.database as db_mod
+    importlib.reload(db_mod)
+    db = db_mod.get_db()
 
 # ---------------------------------------------------------
 # SIDEBAR CONTROLS
@@ -159,40 +164,47 @@ render_section_header(
 try:
     kpis = analytics.get_summary_kpis()
 
+    top_rank = kpis.get("top_rank", 1)
+    top_name = kpis.get("top_competitor_name") or kpis.get("top_ranked_competitor", "N/A")
+    total_ranked = kpis.get("total_ranked_players") or kpis.get("total_competitors", 0)
+    avg_pts = float(kpis.get("average_points", 0.0))
+    tot_countries = kpis.get("total_countries", 0)
+    max_pts = kpis.get("max_points", 0)
+
     k1, k2, k3, k4, k5 = st.columns(5)
 
     with k1:
         render_metric_card(
             "Top Ranked Player",
-            f"#{kpis['top_rank']}",
-            kpis["top_competitor_name"],
+            f"#{top_rank}",
+            top_name,
         )
 
     with k2:
         render_metric_card(
             "Total Ranked Players",
-            f"{kpis['total_ranked_players']:,}",
+            f"{total_ranked:,}",
             "Active Doubles",
         )
 
     with k3:
         render_metric_card(
             "Average Points",
-            f"{kpis['average_points']:,.1f}",
+            f"{avg_pts:,.1f}",
             "Points per Player",
         )
 
     with k4:
         render_metric_card(
             "Represented Countries",
-            f"{kpis['total_countries']:,}",
+            f"{tot_countries:,}",
             "Global Coverage",
         )
 
     with k5:
         render_metric_card(
             "Highest Point Total",
-            f"{kpis['max_points']:,}",
+            f"{max_pts:,}",
             "World Leading Tally",
         )
 

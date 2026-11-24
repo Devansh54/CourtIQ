@@ -35,6 +35,11 @@ st.set_page_config(
 
 apply_custom_css()
 db = get_db()
+if not hasattr(db, "table_exists"):
+    import importlib
+    import courtiq.core.database as db_mod
+    importlib.reload(db_mod)
+    db = db_mod.get_db()
 
 # ---------------------------------------------------------
 # SIDEBAR CONTROLS

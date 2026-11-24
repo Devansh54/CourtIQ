@@ -261,6 +261,33 @@ class DatabaseManager:
             logger.warning("Database health check failed: %s", e)
             return False
 
+    def table_exists(self, table_name: str) -> bool:
+        """Check whether a specific table exists in the database.
+
+        Args:
+            table_name: Name of the relational table.
+
+        Returns:
+            True if table exists in current schema, False otherwise.
+        """
+        try:
+            from sqlalchemy import inspect
+            inspector = inspect(self.engine)
+            return bool(inspector.has_table(table_name))
+        except Exception as e:
+            logger.debug("table_exists check failed for %s: %s", table_name, e)
+            return False
+
+    def get_table_count(self, table_name: str) -> int:
+        """Return the total number of rows in a table, or 0 if missing/error."""
+        if not self.table_exists(table_name):
+            return 0
+        try:
+            row = self.fetch_one(f"SELECT COUNT(*) AS c FROM {table_name};")
+            return int(row["c"]) if row and "c" in row else 0
+        except Exception:
+            return 0
+
     def run_migrations(self, alembic_ini_path: Optional[Union[Path, str]] = None) -> List[str]:
         """Execute pending Alembic database migrations up to head.
 

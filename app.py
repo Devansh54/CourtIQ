@@ -30,6 +30,11 @@ st.set_page_config(
 apply_custom_css()
 settings = get_settings()
 db = get_db()
+if not hasattr(db, "table_exists"):
+    import importlib
+    import courtiq.core.database as db_mod
+    importlib.reload(db_mod)
+    db = db_mod.get_db()
 repo = CompetitionsRepository(db)
 
 # ------------------------------------------------------------------------------
@@ -110,29 +115,42 @@ venues_count = 0
 competitors_count = 0
 
 try:
-    if db.table_exists("competitions"):
+    total_competitions = db.get_table_count("competitions")
+    total_categories = db.get_table_count("categories")
+    venues_count = db.get_table_count("venues")
+    competitors_count = db.get_table_count("competitors")
+except Exception:
+    pass
+
+if total_competitions == 0:
+    try:
         total_competitions = repo.get_competition_count()
-    if db.table_exists("categories"):
+    except Exception:
+        pass
+
+if total_categories == 0:
+    try:
         total_categories = repo.get_category_count()
-except Exception:
-    total_competitions = 0
-    total_categories = 0
+    except Exception:
+        pass
 
-try:
-    if db.table_exists("venues"):
-        v_row = db.fetch_one("SELECT COUNT(*) AS count FROM venues;")
-        if v_row:
-            venues_count = v_row["count"]
-except Exception:
-    venues_count = 0
-
-try:
-    if db.table_exists("competitors"):
-        c_row = db.fetch_one("SELECT COUNT(*) AS count FROM competitors;")
-        if c_row:
-            competitors_count = c_row["count"]
-except Exception:
-    competitors_count = 0
+# Silent auto-initialization in DEMO mode if any domain is unpopulated
+if (total_competitions == 0 or venues_count == 0 or competitors_count == 0) and settings.is_demo_mode:
+    try:
+        runner = IngestionRunner(db)
+        runner.run_migrations_if_needed()
+        if total_competitions == 0:
+            runner.ingest_competitions()
+            total_competitions = db.get_table_count("competitions")
+            total_categories = db.get_table_count("categories")
+        if venues_count == 0:
+            runner.ingest_venues()
+            venues_count = db.get_table_count("venues")
+        if competitors_count == 0:
+            runner.ingest_rankings()
+            competitors_count = db.get_table_count("competitors")
+    except Exception:
+        pass
 
 with col1:
     render_metric_card("Total Competitions", f"{total_competitions:,}" if total_competitions > 0 else "—", "Tournaments & Events" if total_competitions > 0 else "Ready / Ingest Data")

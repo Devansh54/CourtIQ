@@ -23,6 +23,11 @@ st.set_page_config(page_title="Competitions Explorer | CourtIQ", page_icon="🏆
 apply_custom_css()
 
 db = get_db()
+if not hasattr(db, "table_exists"):
+    import importlib
+    import courtiq.core.database as db_mod
+    importlib.reload(db_mod)
+    db = db_mod.get_db()
 repo = CompetitionsRepository(db)
 analytics = CompetitionsAnalytics(repo)
 
@@ -36,7 +41,11 @@ st.markdown("""
 # ------------------------------------------------------------------------------
 # Empty State Check
 # ------------------------------------------------------------------------------
-has_tables = db.table_exists("competitions") and db.table_exists("categories")
+has_tables = False
+try:
+    has_tables = bool(db.table_exists("competitions") and db.table_exists("categories"))
+except Exception:
+    has_tables = False
 comp_count = 0
 if has_tables:
     try:

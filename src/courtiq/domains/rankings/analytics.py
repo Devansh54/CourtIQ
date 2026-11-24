@@ -29,7 +29,8 @@ class RankingsAnalytics:
                 COUNT(DISTINCT cr.competitor_id) AS total_competitors,
                 COUNT(DISTINCT c.country_code) AS total_countries,
                 COALESCE(ROUND(AVG(cr.points), 2), 0) AS average_points,
-
+                COALESCE(MAX(cr.points), 0) AS max_points,
+                COALESCE(MIN(cr.rank), 1) AS top_rank,
                 (
                     SELECT c2.name
                     FROM competitor_rankings cr2
@@ -56,11 +57,16 @@ class RankingsAnalytics:
 
         result = self.repo.db.fetch_one(query) or {}
 
+        top_competitor = result.get("top_ranked_competitor") or "N/A"
         return {
             "total_competitors": int(result.get("total_competitors") or 0),
+            "total_ranked_players": int(result.get("total_competitors") or 0),
             "total_countries": int(result.get("total_countries") or 0),
-            "average_points": float(result.get("average_points") or 0),
-            "top_ranked_competitor": result.get("top_ranked_competitor") or "N/A",
+            "average_points": float(result.get("average_points") or 0.0),
+            "max_points": int(result.get("max_points") or 0),
+            "top_rank": int(result.get("top_rank") or 1),
+            "top_competitor_name": top_competitor,
+            "top_ranked_competitor": top_competitor,
             "biggest_rank_gainer": result.get("biggest_rank_gainer") or "N/A",
         }
 
