@@ -38,7 +38,12 @@ class DatabaseManager:
         """
         settings = get_settings()
         if database_url is None:
-            self.url: str = settings.database_url
+            raw_url = (settings.database_url or "").strip()
+            if raw_url:
+                self.url = raw_url
+            else:
+                settings.courtiq_db_path.parent.mkdir(parents=True, exist_ok=True)
+                self.url = f"sqlite:///{settings.courtiq_db_path.resolve().as_posix()}"
         elif isinstance(database_url, Path):
             self.url = f"sqlite:///{database_url.resolve().as_posix()}"
         elif isinstance(database_url, str):
