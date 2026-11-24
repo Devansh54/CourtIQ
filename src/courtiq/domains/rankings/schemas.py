@@ -1,6 +1,6 @@
 """CourtIQ Doubles Competitor Rankings Domain Schemas.
 
-Domain Owner: Rankings & Analytics Module Owner (25% Contribution)
+Domain Owner: Rankings & Analytics Module Owner
 Reference: REQ-RNK-03, REQ-RNK-04 (PDF Pages 6-7)
 """
 

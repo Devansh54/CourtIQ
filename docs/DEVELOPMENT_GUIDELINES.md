@@ -87,7 +87,7 @@ gitGraph
    commit id: "Initial Architecture"
    branch devansh-foundation-competitions
    checkout devansh-foundation-competitions
-   commit id: "Core Foundation (50%)"
+   commit id: "Core Foundation"
    branch feature/postgresql-database-migration
    checkout feature/postgresql-database-migration
    commit id: "PostgreSQL 18 & Alembic"
@@ -95,16 +95,16 @@ gitGraph
    merge feature/postgresql-database-migration id: "Merge PostgreSQL 18 Foundation"
    branch feature/venues-complexes
    checkout feature/venues-complexes
-   commit id: "Mansi Venues Module (25%)"
+   commit id: "Mansi Venues Module"
    checkout devansh-foundation-competitions
-   merge feature/venues-complexes id: "Merge Venues PR (75%)"
+   merge feature/venues-complexes id: "Merge Venues PR"
    branch feature/competitor-rankings
    checkout feature/competitor-rankings
-   commit id: "Nilakshi Rankings (25%)"
+   commit id: "Nilakshi Rankings"
    checkout devansh-foundation-competitions
-   merge feature/competitor-rankings id: "Merge Rankings PR (100%)"
+   merge feature/competitor-rankings id: "Merge Rankings PR"
    checkout main
-   merge devansh-foundation-competitions id: "Final Capstone Release (100%)"
+   merge devansh-foundation-competitions id: "Final Release"
 ```
 
 ### Branching Rules

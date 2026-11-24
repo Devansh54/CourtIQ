@@ -1,7 +1,6 @@
 """CourtIQ: Tennis Data & Analytics Explorer.
 
 Main Streamlit Application Shell & Homepage Dashboard.
-Author: Devansh (Lead Architect & Core Contributor)
 """
 
 import sys
@@ -34,6 +33,32 @@ db = get_db()
 repo = CompetitionsRepository(db)
 
 # ------------------------------------------------------------------------------
+# Sidebar Global Controls
+# ------------------------------------------------------------------------------
+st.sidebar.title("🎾 CourtIQ Platform")
+if st.sidebar.button("🔄 Refresh Application", use_container_width=True):
+    st.cache_resource.clear()
+    st.rerun()
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("Quick Data Actions")
+if st.sidebar.button("⚡ Initialize & Seed All Data", use_container_width=True):
+    with st.spinner("Applying migrations and ingesting all demo data..."):
+        try:
+            runner = IngestionRunner(db)
+            runner.run_migrations_if_needed()
+            runner.ingest_competitions()
+            runner.ingest_venues()
+            runner.ingest_rankings()
+            st.sidebar.success("All domains initialized and seeded successfully!")
+            st.cache_resource.clear()
+            st.rerun()
+        except Exception as exc:
+            st.sidebar.error(f"Initialization failed: {exc}")
+
+st.sidebar.caption("Mode: " + settings.courtiq_mode)
+
+# ------------------------------------------------------------------------------
 # Top Header Banner
 # ------------------------------------------------------------------------------
 st.markdown("""
@@ -44,34 +69,44 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ------------------------------------------------------------------------------
-# Global Dashboard KPIs
+# Global Dashboard KPIs (Safe Checks)
 # ------------------------------------------------------------------------------
 col1, col2, col3, col4 = st.columns(4)
 
-total_competitions = repo.get_competition_count()
-total_categories = repo.get_category_count()
-
-# Check venues & competitors if tables exist
+total_competitions = 0
+total_categories = 0
 venues_count = 0
 competitors_count = 0
+
 try:
-    v_row = db.fetch_one("SELECT COUNT(*) AS count FROM venues;")
-    if v_row:
-        venues_count = v_row["count"]
+    if db.table_exists("competitions"):
+        total_competitions = repo.get_competition_count()
+    if db.table_exists("categories"):
+        total_categories = repo.get_category_count()
+except Exception:
+    total_competitions = 0
+    total_categories = 0
+
+try:
+    if db.table_exists("venues"):
+        v_row = db.fetch_one("SELECT COUNT(*) AS count FROM venues;")
+        if v_row:
+            venues_count = v_row["count"]
 except Exception:
     venues_count = 0
 
 try:
-    c_row = db.fetch_one("SELECT COUNT(*) AS count FROM competitors;")
-    if c_row:
-        competitors_count = c_row["count"]
+    if db.table_exists("competitors"):
+        c_row = db.fetch_one("SELECT COUNT(*) AS count FROM competitors;")
+        if c_row:
+            competitors_count = c_row["count"]
 except Exception:
     competitors_count = 0
 
 with col1:
-    render_metric_card("Total Competitions", f"{total_competitions:,}", "Tournaments & Events")
+    render_metric_card("Total Competitions", f"{total_competitions:,}" if total_competitions > 0 else "—", "Tournaments & Events" if total_competitions > 0 else "Ready / Ingest Data")
 with col2:
-    render_metric_card("Governing Categories", f"{total_categories:,}", "ATP, WTA, ITF, Grand Slam")
+    render_metric_card("Governing Categories", f"{total_categories:,}" if total_categories > 0 else "—", "ATP, WTA, ITF, Grand Slam" if total_categories > 0 else "Ready / Ingest Data")
 with col3:
     venue_sub = "Venues & Stadia" if venues_count > 0 else "Ready / Ingest Data"
     render_metric_card("Sports Venues", f"{venues_count:,}" if venues_count > 0 else "—", venue_sub)
@@ -80,31 +115,36 @@ with col4:
     render_metric_card("Doubles Competitors", f"{competitors_count:,}" if competitors_count > 0 else "—", comp_sub)
 
 # ------------------------------------------------------------------------------
-# Ingestion Status & Quick Controls
+# Ingestion Status & 1-Click Platform Setup
 # ------------------------------------------------------------------------------
-if total_competitions == 0:
-    st.warning("⚠️ Database is currently unpopulated. Click the button below to ingest competition data.")
-    if st.button("🚀 Ingest Competitions & Categories Data", type="primary"):
-        with st.spinner("Executing database migrations and ingesting competitions..."):
+needs_init = (total_competitions == 0 or venues_count == 0 or competitors_count == 0)
+if needs_init:
+    st.info("💡 **Quick Start:** Some database domains have not been populated yet. Click below to run migrations and populate all demo data with one click.")
+    if st.button("⚡ Initialize Entire Platform & Ingest All Demo Data", type="primary", use_container_width=True):
+        with st.spinner("Applying database migrations and seeding demo data across all domains..."):
             runner = IngestionRunner(db)
-            res = runner.ingest_competitions()
-            if res.status == "SUCCESS":
-                st.success(f"Ingestion successful! {res.categories_ingested} categories and {res.competitions_ingested} competitions loaded.")
-                st.rerun()
-            else:
-                st.error(f"Ingestion failed: {res.message}")
+            runner.run_migrations_if_needed()
+            if total_competitions == 0:
+                runner.ingest_competitions()
+            if venues_count == 0:
+                runner.ingest_venues()
+            if competitors_count == 0:
+                runner.ingest_rankings()
+            st.success("All platform domains initialized and demo data ingested successfully!")
+            st.cache_resource.clear()
+            st.rerun()
 
 # ------------------------------------------------------------------------------
 # Domain Modules Explorer
 # ------------------------------------------------------------------------------
-render_section_header("Platform Modules & Team Contribution Architecture", "Sequential group engineering roadmap (50% / 25% / 25%)")
+render_section_header("Platform Modules & Domain Architecture", "Explore structured tennis analytics across all three core platform domains")
 
 m_col1, m_col2, m_col3 = st.columns(3)
 
 with m_col1:
     st.markdown("""
     ### 🏆 1. Competitions & Categories
-    **Owner:** Devansh (50% Milestone)  
+    **Domain:** Tournament Structures & Hierarchies  
     **Status:** `ACTIVE / FULLY IMPLEMENTED`  
     
     Explore tournament hierarchies, Grand Slams, ATP/WTA/ITF circuits, formats, and all 7 analytical queries.
@@ -114,7 +154,7 @@ with m_col1:
 with m_col2:
     st.markdown("""
     ### 🏟️ 2. Complexes & Venues
-    **Owner:** Venue & Complexes Module Owner (Mansi — 25%)  
+    **Domain:** Tennis Complexes, Stadiums & Geo Analytics  
     **Status:** `ACTIVE / FULLY IMPLEMENTED`  
     
     Geographic mapping of global sports complexes, arenas, timezones, and venue infrastructure.
@@ -124,7 +164,7 @@ with m_col2:
 with m_col3:
     st.markdown("""
     ### 🥇 3. Doubles Competitor Rankings
-    **Owner:** Rankings & Analytics Module Owner (Nilakshi — 25%)  
+    **Domain:** World Doubles Standings & Performance Trends  
     **Status:** `ACTIVE / FULLY IMPLEMENTED`  
     
     Weekly world doubles standings, movement metrics, country dominance, and player profiles.
@@ -153,8 +193,8 @@ with env_col1:
     st.markdown(f"- **Rate Limit Safety:** `{settings.sportradar_rate_limit_rps} RPS`")
 
 with env_col2:
-    st.markdown("#### Team Workload Allocation")
-    st.markdown("- **Devansh (50%):** Overall Architecture, Core Infra, Competitions Domain")
-    st.markdown("- **Venue & Complexes Module Owner (25%):** Complexes, Venues & Related Analytics")
-    st.markdown("- **Rankings & Analytics Module Owner (25%):** Doubles Competitor Rankings & Integration")
-    st.markdown("- **Single Source of Truth:** `docs/TEAM_WORK_ALLOCATION.md`")
+    st.markdown("#### Platform Capabilities")
+    st.markdown("- **Competitions & Categories:** 7 Parameterized SQL Queries & Interactive Hierarchy Explorer")
+    st.markdown("- **Complexes & Venues:** 7 Infrastructure & Geographic Queries with Court Distribution Visualizations")
+    st.markdown("- **Doubles Rankings:** 6 Leaderboard & Movement Queries, Country Dominance Analysis")
+    st.markdown("- **Database Integrity:** PostgreSQL 18 with Connection Pooling & Alembic DDL Versioning")

@@ -27,9 +27,9 @@ CourtIQ is designed to meet enterprise software engineering standards rather tha
 flowchart TD
     subgraph UI_Layer["1. Presentation Layer (Streamlit)"]
         APP["app.py (Homepage Dashboard & Global KPIs)"]
-        PAGE1["pages/1_Competitions.py (Devansh - 50%)"]
-        PAGE2["pages/2_Venues.py (Mansi - 25%)"]
-        PAGE3["pages/3_Rankings.py (Nilakshi - 25%)"]
+        PAGE1["pages/1_Competitions.py (Competitions & Categories)"]
+        PAGE2["pages/2_Venues.py (Complexes & Venues)"]
+        PAGE3["pages/3_Rankings.py (Doubles Competitor Rankings)"]
         UI_UTILS["src/courtiq/utils/formatting.py (Design System)"]
     end
 

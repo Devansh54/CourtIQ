@@ -71,20 +71,13 @@ To maintain software quality and adhere to the project charter:
 
 ---
 
-## 5. Team Contribution Structure
+## 5. Team Domain Architecture
 
-The project engineering workload is strictly distributed across three group contributors:
+The project engineering architecture is structured across three specialized domain modules:
 
-```mermaid
-pie title Planned Engineering Contribution Workload
-    "Devansh (Architecture, Core Infra, Competitions)" : 50
-    "Venue & Complexes Module Owner" : 25
-    "Rankings & Analytics Module Owner" : 25
-```
-
-- **Devansh (50%):** Project Lead & Architect. Responsible for repository establishment, end-to-end software architecture, shared configuration, API client, database connection layer, logging, exceptions, database migration framework, common Streamlit shell and styling, and the complete Competitions & Categories business module (ingestion, persistence, all 7 SQL queries, analytics, Streamlit page, and tests).
-- **Venue & Complexes Module Owner (25%):** Responsible for the Complexes & Venues business module (ingestion, persistence, all 7 SQL queries, analytics, Streamlit page, tests, and Rankings handoff document).
-- **Rankings & Analytics Module Owner (25%):** Responsible for the Doubles Competitor Rankings business module (ingestion, persistence, all 6 SQL queries, analytics, Streamlit page, tests, regression validation, and final handover).
+- **Devansh:** Project Lead & Architect. Responsible for repository establishment, end-to-end software architecture, shared configuration, API client, database connection layer, logging, exceptions, database migration framework, common Streamlit shell and styling, and the complete Competitions & Categories business module (ingestion, persistence, all 7 SQL queries, analytics, Streamlit page, and tests).
+- **Mansi (Venue & Complexes Module Owner):** Responsible for the Complexes & Venues business module (ingestion, persistence, all 7 SQL queries, analytics, Streamlit page, tests, and Rankings handoff document).
+- **Nilakshi (Rankings & Analytics Module Owner):** Responsible for the Doubles Competitor Rankings business module (ingestion, persistence, all 6 SQL queries, analytics, Streamlit page, tests, regression validation, and final handover).
 
 ---
 

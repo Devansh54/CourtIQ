@@ -1,6 +1,5 @@
 """CourtIQ: Competitions & Categories Explorer.
 
-Domain Contributor: Devansh (50% Milestone)
 Features: Hierarchy navigation, category analytics, distribution charts,
 interactive multi-filters, and verified execution of all 7 required SQL queries.
 """
@@ -28,13 +27,21 @@ repo = CompetitionsRepository(db)
 analytics = CompetitionsAnalytics(repo)
 
 st.title("🏆 Tennis Competitions & Categories Explorer")
-st.caption("Module Owner: Devansh — Explore tournament structures, formats, hierarchies, and analytical queries.")
+st.caption("Explore tournament structures, formats, hierarchies, and analytical queries.")
 
 # ------------------------------------------------------------------------------
 # Empty State Check
 # ------------------------------------------------------------------------------
-if repo.get_competition_count() == 0:
-    st.info("ℹ️ Competitions table is currently empty. Run ingestion to populate tournament data.")
+has_tables = db.table_exists("competitions") and db.table_exists("categories")
+comp_count = 0
+if has_tables:
+    try:
+        comp_count = repo.get_competition_count()
+    except Exception:
+        comp_count = 0
+
+if not has_tables or comp_count == 0:
+    st.info("ℹ️ Competitions table is currently uninitialized or empty. Run ingestion to populate tournament data.")
     if st.button("🚀 Ingest Competitions Now", type="primary"):
         with st.spinner("Applying migrations and ingesting data..."):
             runner = IngestionRunner(db)

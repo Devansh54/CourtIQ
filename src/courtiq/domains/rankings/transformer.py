@@ -1,6 +1,6 @@
 """CourtIQ Rankings Transformer.
 
-Domain Owner: Rankings & Analytics Module Owner (25% Contribution)
+Domain Owner: Rankings & Analytics Module Owner
 """
 
 from typing import Any, Dict, List, Tuple

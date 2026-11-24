@@ -1,6 +1,6 @@
 """CourtIQ Rankings Extractor.
 
-Domain Owner: Rankings & Analytics Module Owner (25% Contribution)
+Domain Owner: Rankings & Analytics Module Owner
 Reference: docs/handoffs/RANKINGS_MODULE_HANDOFF.md
 """
 

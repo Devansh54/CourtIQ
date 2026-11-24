@@ -72,7 +72,7 @@ erDiagram
 
 ## 2. Table Specifications & Column Definitions
 
-### 2.1 Domain: Competitions & Categories (Owner: Devansh — 50%)
+### 2.1 Domain: Competitions & Categories (Owner: Devansh)
 
 #### Table: `categories`
 Stores organizing bodies and tournament categories (e.g., ATP, WTA, ITF Men, ITF Women).
@@ -101,7 +101,7 @@ Stores individual competitions, tournaments, and events, supporting multi-level 
 
 ---
 
-### 2.2 Domain: Complexes & Venues (Owner: Mansi — 25%)
+### 2.2 Domain: Complexes & Venues (Owner: Mansi)
 
 #### Table: `complexes`
 Stores tennis complexes and tournament grounds.
@@ -131,7 +131,7 @@ Stores specific venues, stadia, or courts housed within a complex.
 
 ---
 
-### 2.3 Domain: Doubles Competitor Rankings (Owner: Nilakshi — 25%)
+### 2.3 Domain: Doubles Competitor Rankings (Owner: Nilakshi)
 
 #### Table: `competitors`
 Stores player profiles and national federations.

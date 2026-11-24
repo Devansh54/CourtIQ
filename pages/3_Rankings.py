@@ -1,6 +1,5 @@
 """CourtIQ: Doubles Competitor Rankings Explorer.
 
-Domain Contributor: Nilakshi (25% Workload Allocation)
 Interactive Streamlit dashboard for doubles competitor standings, analytics, and SQL exploration.
 """
 
@@ -14,6 +13,7 @@ sys.path.insert(0, str(_ROOT / "src"))
 import pandas as pd
 import streamlit as st
 
+from courtiq.core.database import get_db
 from courtiq.domains.rankings.analytics import RankingsAnalytics
 from courtiq.domains.rankings.repository import RankingsRepository
 from courtiq.ingestion.runner import IngestionRunner
@@ -34,6 +34,34 @@ st.set_page_config(
 )
 
 apply_custom_css()
+db = get_db()
+
+# ---------------------------------------------------------
+# SIDEBAR CONTROLS
+# ---------------------------------------------------------
+st.sidebar.title("🥇 Rankings Controls")
+
+if st.sidebar.button("🔄 Refresh Dashboard", use_container_width=True):
+    st.cache_resource.clear()
+    st.rerun()
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("Data Management")
+
+if st.sidebar.button("⬇️ Run Rankings Ingestion", use_container_width=True):
+    with st.spinner("Extracting and saving Rankings data..."):
+        try:
+            result = IngestionRunner(db).ingest_rankings()
+            if result.status == "SUCCESS":
+                st.sidebar.success(result.message)
+                st.cache_resource.clear()
+                st.rerun()
+            else:
+                st.sidebar.error(result.message)
+        except Exception as exc:
+            st.sidebar.error(f"Ingestion failed: {exc}")
+
+st.sidebar.caption("Current data mode is configured in your .env file.")
 
 # ---------------------------------------------------------
 # HEADER
@@ -51,14 +79,59 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.caption("Module Owner: Nilakshi | Doubles Competitor Rankings | 25% Contribution")
+st.caption("Explore World Doubles Standings, Point Tallies, Week-over-Week Movement, and Country Dominance.")
+
+# ---------------------------------------------------------
+# DATABASE INITIALIZATION & EMPTY STATE CHECKS
+# ---------------------------------------------------------
+tables_exist = False
+try:
+    tables_exist = db.table_exists("competitor_rankings") and db.table_exists("competitors")
+except Exception:
+    tables_exist = False
+
+if not tables_exist:
+    st.warning("⚠️ **Rankings database tables are not initialized yet.**")
+    st.markdown("The database schema for `competitors` and `competitor_rankings` has not been applied.")
+    if st.button("🚀 Initialize Database & Ingest Demo Data", type="primary", use_container_width=True):
+        with st.spinner("Applying database migrations and ingesting data..."):
+            res = IngestionRunner(db).ingest_rankings()
+            if res.status == "SUCCESS":
+                st.success("Rankings initialized successfully!")
+                st.cache_resource.clear()
+                st.rerun()
+            else:
+                st.error(f"Initialization failed: {res.message}")
+    st.stop()
+
+# Check row count
+rankings_count = 0
+try:
+    r_row = db.fetch_one("SELECT COUNT(*) AS count FROM competitor_rankings;")
+    rankings_count = r_row["count"] if r_row else 0
+except Exception:
+    rankings_count = 0
+
+if rankings_count == 0:
+    st.info("ℹ️ **Rankings database is currently empty.**")
+    st.markdown("Database tables exist, but no competitor rankings data has been ingested yet.")
+    if st.button("📥 Ingest Rankings Demo Data Now", type="primary", use_container_width=True):
+        with st.spinner("Ingesting rankings demo data..."):
+            res = IngestionRunner(db).ingest_rankings()
+            if res.status == "SUCCESS":
+                st.success("Rankings data ingested successfully!")
+                st.cache_resource.clear()
+                st.rerun()
+            else:
+                st.error(f"Ingestion failed: {res.message}")
+    st.stop()
 
 # ---------------------------------------------------------
 # INITIALIZE REPOSITORY AND ANALYTICS
 # ---------------------------------------------------------
 @st.cache_resource
 def get_rankings_services():
-    return RankingsRepository(), RankingsAnalytics()
+    return RankingsRepository(db), RankingsAnalytics(RankingsRepository(db))
 
 
 try:
@@ -73,46 +146,14 @@ try:
 
 except Exception as exc:
     st.error(f"Unable to load Rankings data: {exc}")
-    st.info(
-        "Please verify PostgreSQL is running and database migrations "
-        "have been applied."
-    )
     st.stop()
 
 # ---------------------------------------------------------
-# SIDEBAR CONTROLS
-# ---------------------------------------------------------
-st.sidebar.title("🥇 Rankings Controls")
-
-if st.sidebar.button("🔄 Refresh Dashboard", use_container_width=True):
-    st.cache_resource.clear()
-    st.rerun()
-
-st.sidebar.markdown("---")
-st.sidebar.subheader("Data Management")
-
-if st.sidebar.button("⬇️ Run Rankings Ingestion", use_container_width=True):
-    with st.spinner("Extracting and saving Rankings data..."):
-        try:
-            result = IngestionRunner().ingest_rankings()
-
-            if result.status == "SUCCESS":
-                st.sidebar.success(result.message)
-                st.rerun()
-            else:
-                st.sidebar.error(result.message)
-
-        except Exception as exc:
-            st.sidebar.error(f"Ingestion failed: {exc}")
-
-st.sidebar.caption("Current data mode is configured in your .env file.")
-
-# ---------------------------------------------------------
-# KPI METRICS OVERVIEW
+# KPI CARDS
 # ---------------------------------------------------------
 render_section_header(
-    "📊 Doubles Rankings Intelligence Overview",
-    "Live summary metrics calculated from the PostgreSQL database.",
+    "📊 Global Doubles Rankings Overview",
+    "Live competitor statistics calculated from the PostgreSQL database.",
 )
 
 try:
@@ -122,57 +163,100 @@ try:
 
     with k1:
         render_metric_card(
-            "Ranked Players",
-            f"{kpis['total_competitors']:,}",
-            "Competitors tracked",
+            "Top Ranked Player",
+            f"#{kpis['top_rank']}",
+            kpis["top_competitor_name"],
         )
 
     with k2:
         render_metric_card(
-            "Countries",
-            f"{kpis['total_countries']:,}",
-            "National federations",
+            "Total Ranked Players",
+            f"{kpis['total_ranked_players']:,}",
+            "Active Doubles",
         )
 
     with k3:
         render_metric_card(
             "Average Points",
             f"{kpis['average_points']:,.1f}",
-            "Global point average",
+            "Points per Player",
         )
 
     with k4:
         render_metric_card(
-            "World #1 Doubles",
-            kpis["top_ranked_competitor"],
-            "Official world rank 1",
+            "Represented Countries",
+            f"{kpis['total_countries']:,}",
+            "Global Coverage",
         )
 
     with k5:
         render_metric_card(
-            "Top Rank Gainer",
-            kpis["biggest_rank_gainer"],
-            "Weekly rank gain",
+            "Highest Point Total",
+            f"{kpis['max_points']:,}",
+            "World Leading Tally",
         )
 
 except Exception as exc:
     st.warning(f"Could not calculate summary KPIs: {exc}")
 
 # ---------------------------------------------------------
-# DASHBOARD TABS
+# ANALYTICS CHARTS
 # ---------------------------------------------------------
-tab1, tab2, tab3, tab4 = st.tabs([
-    "🏅 Leaderboard & Visualizations",
-    "🌍 Country Analysis",
-    "🔎 Interactive Filters & Search",
-    "🧠 Advanced SQL Query Explorer",
-])
+render_section_header(
+    "📈 Performance & Geographic Analytics",
+    "Visual insights into rankings, point distributions, and country dominance.",
+)
+
+chart_col1, chart_col2 = st.columns(2)
+
+with chart_col1:
+    st.subheader("🏆 Top Ranked Doubles Players")
+    try:
+        top_chart = analytics.create_top_competitors_chart(limit=10)
+        st.plotly_chart(top_chart, use_container_width=True)
+    except Exception as exc:
+        st.warning(f"Top competitors chart unavailable: {exc}")
+
+with chart_col2:
+    st.subheader("🎾 Competitions Played vs. Points")
+    try:
+        scatter_chart = analytics.create_competitions_vs_points_scatter()
+        st.plotly_chart(scatter_chart, use_container_width=True)
+    except Exception as exc:
+        st.warning(f"Competitions vs points chart unavailable: {exc}")
+
+chart_col3, chart_col4 = st.columns(2)
+
+with chart_col3:
+    st.subheader("🌍 Points Distribution by Country")
+    try:
+        pie_chart = analytics.create_country_points_pie()
+        st.plotly_chart(pie_chart, use_container_width=True)
+    except Exception as exc:
+        st.warning(f"Country points distribution chart unavailable: {exc}")
+
+with chart_col4:
+    st.subheader("👥 Competitors per Country")
+    try:
+        bar_chart = analytics.create_country_competitors_bar()
+        st.plotly_chart(bar_chart, use_container_width=True)
+    except Exception as exc:
+        st.warning(f"Competitors per country chart unavailable: {exc}")
 
 # ---------------------------------------------------------
-# TAB 1: LEADERBOARD & VISUALIZATIONS
+# TABS
 # ---------------------------------------------------------
+tab1, tab2, tab3, tab4 = st.tabs(
+    [
+        "🏆 Leaderboard",
+        "🌍 Geographic Distribution",
+        "📈 Movement & Stability",
+        "⚡ SQL Query Explorer",
+    ]
+)
+
 with tab1:
-    render_section_header("Top Ranked Competitors", "Official world doubles standings")
+    st.subheader("Official Doubles Rankings Leaderboard")
 
     if not leaderboard.empty:
         st.dataframe(
@@ -181,190 +265,107 @@ with tab1:
             hide_index=True,
         )
     else:
-        st.info("No ranking records available. Ingest ranking data using the sidebar.")
+        st.info("No leaderboard records available.")
 
-    chart_col1, chart_col2 = st.columns(2)
-
-    with chart_col1:
-        st.subheader("📊 Top Competitors by Points")
-        try:
-            fig_top = analytics.create_top_competitors_chart(limit=10)
-            st.plotly_chart(fig_top, use_container_width=True)
-        except Exception as exc:
-            st.warning(f"Chart unavailable: {exc}")
-
-    with chart_col2:
-        st.subheader("📈 Competitions Played vs Points")
-        try:
-            fig_scatter = analytics.create_competitions_vs_points_scatter()
-            st.plotly_chart(fig_scatter, use_container_width=True)
-        except Exception as exc:
-            st.warning(f"Chart unavailable: {exc}")
-
-# ---------------------------------------------------------
-# TAB 2: COUNTRY ANALYSIS
-# ---------------------------------------------------------
 with tab2:
-    render_section_header(
-        "Country Dominance & Point Distribution",
-        "Competitor representation and cumulative point tallies by country",
-    )
+    st.subheader("Country Representation & Point Totals")
 
-    col1, col2 = st.columns(2)
+    col_a, col_b = st.columns(2)
 
-    with col1:
-        st.subheader("🌍 Competitors per Country")
-        try:
-            fig_country_bar = analytics.create_country_competitors_bar()
-            st.plotly_chart(fig_country_bar, use_container_width=True)
-        except Exception as exc:
-            st.warning(f"Chart unavailable: {exc}")
-
-    with col2:
-        st.subheader("🍩 Points Share by Country")
-        try:
-            fig_points_pie = analytics.create_country_points_pie()
-            st.plotly_chart(fig_points_pie, use_container_width=True)
-        except Exception as exc:
-            st.warning(f"Chart unavailable: {exc}")
-
-    st.subheader("Country Standings Breakdown")
-    if not points_by_country.empty:
-        st.dataframe(
-            points_by_country,
-            use_container_width=True,
-            hide_index=True,
-        )
-
-# ---------------------------------------------------------
-# TAB 3: FILTERS & MOVEMENT
-# ---------------------------------------------------------
-with tab3:
-    render_section_header(
-        "Interactive Ranking Filters",
-        "Explore competitors by country, name search, and ranking movement",
-    )
-
-    if not leaderboard.empty:
-        countries = sorted(
-            leaderboard["country"].dropna().unique().tolist()
-        )
-
-        filter_col1, filter_col2 = st.columns(2)
-
-        with filter_col1:
-            selected_country = st.selectbox(
-                "Filter by Country",
-                ["All Countries"] + countries,
+    with col_a:
+        st.markdown("#### Competitor Count by Country")
+        if not country_data.empty:
+            st.dataframe(
+                country_data,
+                use_container_width=True,
+                hide_index=True,
             )
+        else:
+            st.info("No country count data available.")
 
-        with filter_col2:
-            search_name = st.text_input("🔍 Search Competitor Name")
+    with col_b:
+        st.markdown("#### Total Ranking Points by Country")
+        if not points_by_country.empty:
+            st.dataframe(
+                points_by_country,
+                use_container_width=True,
+                hide_index=True,
+            )
+        else:
+            st.info("No country points data available.")
 
-        filtered_data = leaderboard.copy()
+with tab3:
+    st.subheader("Weekly Movement & Zero-Movement Competitors")
 
-        if selected_country != "All Countries":
-            filtered_data = filtered_data[
-                filtered_data["country"] == selected_country
-            ]
+    col_c, col_d = st.columns(2)
 
-        if search_name.strip():
-            filtered_data = filtered_data[
-                filtered_data["name"].str.contains(
-                    search_name.strip(),
-                    case=False,
-                    na=False,
-                )
-            ]
+    with col_c:
+        st.markdown("#### Rank Gainers (Positive Movement)")
+        if not gainers.empty:
+            st.dataframe(
+                gainers,
+                use_container_width=True,
+                hide_index=True,
+            )
+        else:
+            st.info("No rank gainers found.")
 
-        st.metric("Matching Competitors", len(filtered_data))
+    with col_d:
+        st.markdown("#### Stable / Zero Movement Competitors")
+        if not stable_players.empty:
+            st.dataframe(
+                stable_players,
+                use_container_width=True,
+                hide_index=True,
+            )
+        else:
+            st.info("No stable player records found.")
 
-        st.dataframe(
-            filtered_data,
-            use_container_width=True,
-            hide_index=True,
-        )
-
-        csv_data = filtered_data.to_csv(index=False).encode("utf-8")
-        st.download_button(
-            "⬇️ Download Filtered Rankings CSV",
-            data=csv_data,
-            file_name="courtiq_filtered_rankings.csv",
-            mime="text/csv",
-        )
-
-    st.subheader("🚀 Weekly Rank Gainers (Positive Movement)")
-    if not gainers.empty:
-        st.dataframe(
-            gainers,
-            use_container_width=True,
-            hide_index=True,
-        )
-    else:
-        st.info("No competitors with positive weekly rank movement.")
-
-    st.subheader("⚖️ Stable Ranking Competitors (Zero Movement)")
-    if not stable_players.empty:
-        st.dataframe(
-            stable_players,
-            use_container_width=True,
-            hide_index=True,
-        )
-    else:
-        st.info("No competitors with stable ranking movement found.")
-
-# ---------------------------------------------------------
-# TAB 4: SQL QUERY CENTER
-# ---------------------------------------------------------
 with tab4:
-    render_section_header(
-        "Advanced SQL Query Explorer",
-        "Execute and inspect all six analytical SQL queries implemented for the Rankings domain.",
-    )
+    st.subheader("⚡ Required SQL Queries Explorer")
 
-    query_options = {
-        "Q1 - Top 10 Ranked Competitors": "q1",
-        "Q2 - Rankings by Specific Country": "q2",
-        "Q3 - Rank Movement Gainers": "q3",
-        "Q4 - Competitions Played vs Points": "q4",
-        "Q5 - Stable / Zero Movement Competitors": "q5",
-        "Q6 - Points Distribution by Country": "q6",
+    queries_map = {
+        "Q1: Top Ranked Competitors": (
+            "q1_top_ranked_competitors.sql",
+            lambda: repository.query_1_top_ranked_competitors(),
+        ),
+        "Q2: Rankings by Country": (
+            "q2_rankings_by_country.sql",
+            lambda: repository.query_2_rankings_by_country(),
+        ),
+        "Q3: Rank Movement Gainers": (
+            "q3_rank_movement_gainers.sql",
+            lambda: repository.query_3_rank_movement_gainers(),
+        ),
+        "Q4: Competitions Played vs Points": (
+            "q4_competitions_played_vs_points.sql",
+            lambda: repository.query_4_competitions_played_vs_points(),
+        ),
+        "Q5: Unranked or Zero Movement Competitors": (
+            "q5_unranked_or_zero_movement_competitors.sql",
+            lambda: repository.query_5_unranked_or_zero_movement(),
+        ),
+        "Q6: Points Distribution by Country": (
+            "q6_points_distribution_by_country.sql",
+            lambda: repository.query_6_points_distribution_by_country(),
+        ),
     }
 
     selected_query_label = st.selectbox(
-        "Select Analytical Query",
-        list(query_options.keys()),
+        "Select Analytical Query to Inspect and Execute:",
+        list(queries_map.keys()),
     )
 
-    query_key = query_options[selected_query_label]
-    query_result = pd.DataFrame()
+    sql_file, executor = queries_map[selected_query_label]
 
     try:
-        if query_key == "q1":
-            query_result = repository.query_1_top_ranked_competitors()
+        sql_content = repository._read_query(sql_file)
+        st.markdown("#### SQL Statement:")
+        st.code(sql_content, language="sql")
 
-        elif query_key == "q2":
-            country_input = st.text_input(
-                "Enter Country Name",
-                value="Croatia",
-            )
-            if country_input.strip():
-                query_result = repository.query_2_rankings_by_country(
-                    country_input.strip()
-                )
+        query_result = executor()
 
-        elif query_key == "q3":
-            query_result = repository.query_3_rank_movement_gainers()
-
-        elif query_key == "q4":
-            query_result = repository.query_4_competitions_played_vs_points()
-
-        elif query_key == "q5":
-            query_result = repository.query_5_unranked_or_zero_movement()
-
-        elif query_key == "q6":
-            query_result = repository.query_6_points_distribution_by_country()
-
+        st.markdown("#### Execution Results:")
         st.dataframe(
             query_result,
             use_container_width=True,
@@ -385,7 +386,7 @@ st.markdown(
     """
     <div style="text-align:center; padding: 1rem;">
         <h4>🥇 CourtIQ | Doubles Rankings Intelligence Module</h4>
-        <p>Designed and implemented by Nilakshi | 25% Module Contribution</p>
+        <p>CourtIQ Tennis Analytics Platform — Competitor Rankings</p>
         <p>Powered by Streamlit, PostgreSQL, Plotly and Sportradar data.</p>
     </div>
     """,

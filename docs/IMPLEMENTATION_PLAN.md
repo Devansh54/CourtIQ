@@ -15,15 +15,15 @@ The project follows a 7-day sequential sprint cycle, aligning with the evaluatio
 gantt
     title CourtIQ 7-Day Implementation Schedule
     dateFormat  YYYY-MM-DD
-    section Phase 1: Devansh (50%)
+    section Phase 1: Devansh (Competitions)
     Repo & Architecture Audit           :done,    p1_1, 2026-11-04, 1d
     Core Infrastructure (API, DB, Log)   :active,  p1_2, 2026-11-05, 1d
     Competitions Ingestion & 7 Queries   :         p1_3, 2026-11-06, 1d
     Competitions UI, Tests & Handoff 1   :         p1_4, 2026-11-06, 1d
-    section Phase 2: Venue Owner (25%)
+    section Phase 2: Mansi (Venues)
     Venues Ingestion & Persistence       :         p2_1, 2026-11-07, 1d
     Venues 7 Queries, UI & Handoff 2     :         p2_2, 2026-11-08, 1d
-    section Phase 3: Rankings Owner (25%)
+    section Phase 3: Nilakshi (Rankings)
     Rankings Ingestion & 6 Queries       :         p3_1, 2026-11-09, 1d
     Rankings UI, Cross-Regression & Docs :         p3_2, 2026-11-10, 1d
 ```
@@ -32,7 +32,7 @@ gantt
 
 ## 2. Milestone Deliverables & Gate Verification
 
-### Milestone 1: Foundation & Competitions (Devansh — 50%)
+### Milestone 1: Foundation & Competitions (Devansh)
 - **Target Completion:** Day 3
 - **Gate Criteria:**
   - Git repository initialized and connected to remote.
@@ -44,7 +44,7 @@ gantt
   - 100% pass rate on unit and integration tests for core and competitions.
   - `docs/handoffs/VENUES_MODULE_HANDOFF.md` created and verified.
 
-### Milestone 2: Complexes & Venues (Venue & Complexes Module Owner — 25%)
+### Milestone 2: Complexes & Venues (Mansi)
 - **Target Completion:** Day 5
 - **Gate Criteria:**
   - `sql/migrations/002_venues.sql` implemented and applied.
@@ -54,7 +54,7 @@ gantt
   - Unit tests in `tests/unit/venues/` passing.
   - `docs/handoffs/RANKINGS_MODULE_HANDOFF.md` generated with verified repo state.
 
-### Milestone 3: Rankings, System Integration & Final Delivery (Rankings & Analytics Module Owner — 25%)
+### Milestone 3: Rankings, System Integration & Final Delivery (Nilakshi)
 - **Target Completion:** Day 7
 - **Gate Criteria:**
   - `sql/migrations/003_rankings.sql` implemented and applied.

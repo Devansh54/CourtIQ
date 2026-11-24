@@ -14,11 +14,11 @@ The requirements below have been comprehensively extracted from the 14-page sour
 | Requirement Domain | Total Specs | Core Scope | Planned Owner |
 |---|:---:|:---:|---|
 | Shared Foundation & Infrastructure (INFRA) | 8 | Foundation | Devansh |
-| Competitions & Categories Domain (COMP) | 14 | 50% Milestone | Devansh |
-| Venues & Complexes Domain (VEN) | 12 | 25% Milestone | Venue & Complexes Module Owner |
-| Doubles Competitor Rankings Domain (RNK) | 12 | 25% Milestone | Rankings & Analytics Module Owner |
+| Competitions & Categories Domain (COMP) | 14 | Domain Milestone 1 | Devansh |
+| Venues & Complexes Domain (VEN) | 12 | Domain Milestone 2 | Venue & Complexes Module Owner |
+| Doubles Competitor Rankings Domain (RNK) | 12 | Domain Milestone 3 | Rankings & Analytics Module Owner |
 | Streamlit Application & Visuals (UI) | 10 | Shared & Domain | Devansh (Shell + Comp) / Owners (Pages) |
-| **Total Requirements** | **56** | **100%** | **Group Allocation: 50% / 25% / 25%** |
+| **Total Requirements** | **56** | **Production Scope** | **All 3 Domains Fully Delivered** |
 
 ---
 
@@ -37,7 +37,7 @@ The requirements below have been comprehensively extracted from the 14-page sour
 
 ---
 
-## 3. Competitions & Categories Domain Requirements (COMP) — Devansh (50%)
+## 3. Competitions & Categories Domain Requirements (COMP) — Devansh
 
 | Req ID | PDF Source Ref | Requirement Description | Implementation Target | Verification Method | Owner |
 |---|---|---|---|---|---|
@@ -58,7 +58,7 @@ The requirements below have been comprehensively extracted from the 14-page sour
 
 ---
 
-## 4. Venues & Complexes Domain Requirements (VEN) — Venue & Complexes Module Owner (25%)
+## 4. Venues & Complexes Domain Requirements (VEN) — Venue & Complexes Module Owner
 
 | Req ID | PDF Source Ref | Requirement Description | Implementation Target | Verification Method | Owner |
 |---|---|---|---|---|---|
@@ -77,7 +77,7 @@ The requirements below have been comprehensively extracted from the 14-page sour
 
 ---
 
-## 5. Doubles Competitor Rankings Domain Requirements (RNK) — Rankings & Analytics Module Owner (25%)
+## 5. Doubles Competitor Rankings Domain Requirements (RNK) — Rankings & Analytics Module Owner
 
 | Req ID | PDF Source Ref | Requirement Description | Implementation Target | Verification Method | Owner |
 |---|---|---|---|---|---|

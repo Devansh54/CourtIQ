@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- Migration: 001_competitions.sql
 -- Domain: Competitions & Categories
--- Contributor: Devansh (50% Core Ownership)
+-- Contributor: Devansh
 -- Standards: ANSI SQL Compatible (SQLite, PostgreSQL, MySQL)
 -- ==============================================================================
 

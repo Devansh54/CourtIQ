@@ -1,6 +1,6 @@
 """CourtIQ Rankings Repository.
 
-Domain Owner: Rankings & Analytics Module Owner (25% Contribution)
+Domain Owner: Rankings & Analytics Module Owner
 """
 
 from pathlib import Path

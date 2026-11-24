@@ -14,21 +14,21 @@ The project combines API-based data collection, data validation and transformati
 
 CourtIQ is organised around three related areas of tennis data:
 
-### 1. Competitions and categories (Devansh — 50%)
+### 1. Competitions and categories
 Explore competition metadata and how competitions are organised, including:
 - Competition names, categories, formats, and gender classifications.
 - Parent competitions and their sub-competition relationships.
 - Competition counts and format distributions across categories.
 - Filtering, searching, and execution of all 7 required analytical queries.
 
-### 2. Complexes and venues (Mansi — 25%)
+### 2. Complexes and venues
 Explore tennis facilities and their location information, including:
 - Sports complexes and the venues associated with them.
 - Venue names, cities, and countries.
 - Country codes and time zones.
 - Venue counts by complex and country.
 
-### 3. Doubles competitor rankings (Nilakshi — 25%) 
+### 3. Doubles competitor rankings
 Explore doubles ranking information and competitor metadata, including:
 - Competitor names and countries.
 - Ranking positions and movement.
@@ -180,13 +180,15 @@ python scripts/migrate_sqlite_to_postgres.py --dry-run
 python scripts/migrate_sqlite_to_postgres.py --apply
 ```
 
-### 8. Ingest competition data
+### 8. Seed platform demo data
 
-Run the ingestion pipeline to populate tournament categories and competitions:
+Initialize database schemas and populate all three platform domains (Competitions, Venues, and Doubles Rankings) with a single master command:
 
 ```bash
-python scripts/ingest_competitions.py
+python scripts/seed_demo_data.py
 ```
+
+*(Alternatively, you can start the application with `streamlit run app.py` and click the **⚡ Initialize Entire Platform & Ingest All Demo Data** button directly on the homepage).*
 
 ### 9. Run the Streamlit application
 
@@ -266,7 +268,7 @@ CourtIQ/
     ├── DATABASE_DESIGN.md         # Database schema, normalization, and constraints
     ├── DEVELOPMENT_GUIDELINES.md  # Contributor guidelines for Mansi & Nilakshi
     ├── IMPLEMENTATION_STATUS.md   # Current implementation tracking & milestones
-    └── TEAM_WORK_ALLOCATION.md    # 50% / 25% / 25% workload distribution agreement
+    └── TEAM_WORK_ALLOCATION.md    # Domain architecture and modular ownership agreement
 ```
 
 ---

@@ -21,19 +21,19 @@ def test_full_system_cross_domain_regression(postgres_test_db: DatabaseManager):
 
     runner = IngestionRunner(postgres_test_db)
 
-    # 1. Ingest Competitions Domain (50% Milestone)
+    # 1. Ingest Competitions Domain
     res_comp = runner.ingest_competitions()
     assert res_comp.status == "SUCCESS"
     assert res_comp.records_ingested > 0
     assert res_comp.errors == 0
 
-    # 2. Ingest Venues & Complexes Domain (25% Milestone)
+    # 2. Ingest Venues & Complexes Domain
     res_ven = runner.ingest_venues()
     assert res_ven.status == "SUCCESS"
     assert res_ven.records_ingested > 0
     assert res_ven.errors == 0
 
-    # 3. Ingest Doubles Rankings Domain (25% Milestone)
+    # 3. Ingest Doubles Rankings Domain
     res_rnk = runner.ingest_rankings()
     assert res_rnk.status == "SUCCESS"
     assert res_rnk.records_ingested > 0
