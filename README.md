@@ -4,13 +4,13 @@
 
 **Explore Competitions. Analyse Rankings. Discover Tennis.**
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://courtiq.streamlit.app)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://courtiq07.streamlit.app)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/)
 [![Database: PostgreSQL 18](https://img.shields.io/badge/PostgreSQL-18-336791.svg?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Tests: 94 Passing](https://img.shields.io/badge/tests-94%20passed-success.svg)](tests/)
 
-> 🚀 **Live Showcase Deployment:** [https://courtiq.streamlit.app](https://courtiq.streamlit.app)  
-> *(1-Click Launch: [Deploy on Streamlit Community Cloud](https://share.streamlit.io/new?repository=Devansh54/CourtIQ&branch=main&main_file=app.py))*
+> **Live Deployment:** [https://courtiq07.streamlit.app](https://courtiq07.streamlit.app)  
+> Competitions Explorer: [https://courtiq07.streamlit.app/Competitions](https://courtiq07.streamlit.app/Competitions)
 
 CourtIQ is a Python-based tennis data exploration and analytics application built around the [Sportradar Tennis API](https://developer.sportradar.com/tennis/reference/tennis-overview). It brings together structured information about tennis competitions, sports complexes and venues, and doubles competitor rankings, with the aim of making that data easier to explore and analyse.
 
@@ -18,19 +18,16 @@ The project combines API-based data collection, data validation and transformati
 
 ---
 
-## 🌐 Live Showcase & Cloud Deployment
+## Live deployment
 
-CourtIQ is cloud-ready and designed to run with zero server maintenance:
+The application is deployed and hosted on Streamlit Community Cloud:
 
-| Deployment Target | Status / Link | Configuration |
-|---|---|---|
-| **Streamlit Community Cloud** | 🚀 [courtiq.streamlit.app](https://courtiq.streamlit.app) | One-click deployment from `main` branch (`app.py`) |
-| **Instant 1-Click Launch** | ⚡ [Deploy to Streamlit Cloud](https://share.streamlit.io/new?repository=Devansh54/CourtIQ&branch=main&main_file=app.py) | Pre-configured repository & entry point |
-| **Local Evaluation** | 💻 `http://localhost:8501` | `docker compose up -d` & `streamlit run app.py` |
-| **Container Runtime** | 🐳 [Dockerfile](Dockerfile) | Multi-stage production container build |
+- **Application URL:** [https://courtiq07.streamlit.app](https://courtiq07.streamlit.app)
+- **Competitions Explorer:** [https://courtiq07.streamlit.app/Competitions](https://courtiq07.streamlit.app/Competitions)
+- **Venues Intelligence:** [https://courtiq07.streamlit.app/Venues](https://courtiq07.streamlit.app/Venues)
+- **Doubles Rankings:** [https://courtiq07.streamlit.app/Rankings](https://courtiq07.streamlit.app/Rankings)
 
-- **Zero-Config Cloud Runtime:** The cloud deployment automatically boots with demo fixtures if an external PostgreSQL database is not attached, ensuring all 19 competitions, 5 categories, 11 venues, and 10 competitor rankings render instantly out of the box with zero setup.
-- **Enterprise PostgreSQL Mode:** For production with managed PostgreSQL (e.g. Supabase, Neon, AWS RDS), configure `DATABASE_URL` in the Streamlit Cloud Secrets settings. For full details, see the [Production Deployment Guide](docs/DEPLOYMENT_GUIDE.md).
+The deployment runs from the `main` branch with automated schema migration and demo dataset initialization, ensuring all tournament, venue, and ranking analytics are accessible without manual configuration.
 
 ---
 
@@ -257,6 +254,7 @@ CourtIQ/
 ├── .streamlit/
 │   └── config.toml                # Production theme and headless server configuration
 ├── app.py                         # Streamlit application entry point & dashboard
+├── streamlit_app.py               # Streamlit Cloud launch entry point
 ├── pages/                         # Streamlit domain exploration pages
 │   ├── 1_Competitions.py          # Competitions explorer
 │   ├── 2_Venues.py                # Venues explorer
