@@ -26,8 +26,12 @@ db = get_db()
 repo = CompetitionsRepository(db)
 analytics = CompetitionsAnalytics(repo)
 
-st.title("🏆 Tennis Competitions & Categories Explorer")
-st.caption("Explore tournament structures, formats, hierarchies, and analytical queries.")
+st.markdown("""
+<div class="courtiq-header-banner">
+    <h1>🏆 CourtIQ | Competitions Intelligence</h1>
+    <p>Explore tournament structures, Grand Slams, ATP/WTA/ITF circuits, formats, parent-sub hierarchies, and 7 analytical queries.</p>
+</div>
+""", unsafe_allow_html=True)
 
 # ------------------------------------------------------------------------------
 # Empty State Check

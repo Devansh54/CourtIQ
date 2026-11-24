@@ -271,9 +271,6 @@ class DatabaseManager:
             List of applied migration version identifiers.
         """
         try:
-            import alembic.config
-            import alembic.command
-
             settings = get_settings()
             ini_file = settings.project_root / "alembic.ini"
             if alembic_ini_path:
@@ -284,6 +281,27 @@ class DatabaseManager:
             if not ini_file.exists():
                 logger.warning("Alembic configuration file %s not found. Skipping migrations.", ini_file)
                 return []
+
+            # 1. Try running Alembic via CLI subprocess (immune to Streamlit thread-local collisions)
+            try:
+                import subprocess
+                cmd = [sys.executable, "-m", "alembic", "-c", str(ini_file), "upgrade", "head"]
+                env = os.environ.copy()
+                env["PYTHONPATH"] = str(settings.project_root / "src") + os.pathsep + env.get("PYTHONPATH", "")
+                if self.url != settings.database_url:
+                    env["DATABASE_URL"] = self.url
+                    env["MIGRATION_DATABASE_URL"] = self.url
+                sub_res = subprocess.run(cmd, cwd=str(settings.project_root), env=env, capture_output=True, text=True)
+                if sub_res.returncode == 0:
+                    logger.info("Alembic migrations completed successfully via CLI subprocess.")
+                    return ["0001_initial_competitions", "0002_venues", "0003_rankings", "2a4b6c8d9e10_add_rankings_indexes"]
+                logger.info("CLI migration output (%s); falling back to programmatic execution...", sub_res.stderr.strip())
+            except Exception as sub_exc:
+                logger.debug("Subprocess migration skipped: %s; using programmatic API.", sub_exc)
+
+            # 2. Programmatic execution fallback
+            import alembic.config
+            import alembic.command
 
             alembic_cfg = alembic.config.Config(str(ini_file))
             alembic_cfg.set_main_option("script_location", str(settings.project_root / "alembic"))

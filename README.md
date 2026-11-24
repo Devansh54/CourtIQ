@@ -278,6 +278,7 @@ CourtIQ/
 Further technical details are maintained in the `docs/` directory:
 
 - [PostgreSQL Setup & Migration Guide](docs/POSTGRESQL_SETUP.md)
+- [Production Deployment Guide](docs/DEPLOYMENT_GUIDE.md)
 - [System Architecture](docs/ARCHITECTURE.md)
 - [Database Design](docs/DATABASE_DESIGN.md)
 - [Development Guidelines](docs/DEVELOPMENT_GUIDELINES.md)
